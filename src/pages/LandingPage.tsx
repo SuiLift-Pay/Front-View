@@ -398,7 +398,6 @@
 
 // export default LandingPage;
 
-
 import React, { useRef } from "react";
 import { IoIosNotifications, IoIosContact } from "react-icons/io";
 import {
@@ -494,11 +493,17 @@ const LandingPage = () => {
         {/* Navbar */}
         <motion.header
           initial={{ y: -100, opacity: 0 }}
-          animate={isInViewNavbar ? { y: 0, opacity: 1 } : { y: -100, opacity: 0 }}
+          animate={
+            isInViewNavbar ? { y: 0, opacity: 1 } : { y: -100, opacity: 0 }
+          }
           transition={{ duration: 0.5 }}
           className="flex justify-between items-center md:px-30 lg:px-50 py-20"
         >
-          <img src="/images/logo.svg" alt="SuiLift Logo" className="h-10" />
+          <img
+            src="/images/logo.svg"
+            alt="SuiLift Logo"
+            className="w-15 h-15"
+          />
           <motion.nav
             initial={{ opacity: 0 }}
             animate={isInViewNavbar ? { opacity: 1 } : { opacity: 0 }}
@@ -508,6 +513,10 @@ const LandingPage = () => {
             <a href="#home" className="hover:text-blue-500">
               Home
             </a>
+            <a href="#home" className="hover:text-blue-500">
+              About
+            </a>
+
             <a href="#features" className="hover:text-blue-500">
               Features
             </a>
@@ -609,7 +618,11 @@ const LandingPage = () => {
         </div>
       </section>
       {/* Why SuiLift Section */}
-      <section ref={refWhy} id="why" className="md:px-10 lg:px-60 py-16 text-center">
+      <section
+        ref={refWhy}
+        id="why"
+        className="md:px-10 lg:px-60 py-16 text-center"
+      >
         <h2 className="md:text-3xl lg:text-5xl font-bold mb-2">
           Why <span className="text-blue-400">SuiLift</span>
         </h2>
@@ -621,7 +634,9 @@ const LandingPage = () => {
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 50 }}
-              animate={isInViewWhy ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+              animate={
+                isInViewWhy ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }
+              }
               transition={{ delay: i * 0.2, duration: 0.5 }}
               className={`border ${f.border} p-6 rounded-xl text-left flex flex-col items-start`}
             >
@@ -665,7 +680,9 @@ const LandingPage = () => {
         <motion.div
           ref={refStep1}
           initial={{ opacity: 0, x: -50 }}
-          animate={isInViewStep1 ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }}
+          animate={
+            isInViewStep1 ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }
+          }
           transition={{ duration: 0.5 }}
           className="border rounded-lg p-6"
         >
@@ -726,7 +743,9 @@ const LandingPage = () => {
         <motion.div
           ref={refStep3}
           initial={{ opacity: 0, x: -50 }}
-          animate={isInViewStep3 ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }}
+          animate={
+            isInViewStep3 ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }
+          }
           transition={{ delay: 0.4, duration: 0.5 }}
           className="border rounded-lg p-6"
         >
@@ -790,11 +809,16 @@ const LandingPage = () => {
         </a>
       </div>
       {/* last card */}
-      <div ref={refFeatures} className="flex flex-col items-center justify-center p-6">
+      <div
+        ref={refFeatures}
+        className="flex flex-col items-center justify-center p-6"
+      >
         <div className="text-center mb-12">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
-            animate={isInViewFeatures ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            animate={
+              isInViewFeatures ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
+            }
             transition={{ duration: 0.5 }}
             className="text-4xl font-bold text-blue-400"
           >
@@ -802,7 +826,9 @@ const LandingPage = () => {
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
-            animate={isInViewFeatures ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            animate={
+              isInViewFeatures ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
+            }
             transition={{ delay: 0.2, duration: 0.5 }}
             className="text-gray-400 mt-2"
           >
@@ -866,7 +892,9 @@ const LandingPage = () => {
       >
         <motion.div
           initial={{ opacity: 0, x: -50 }}
-          animate={isInViewFooter ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }}
+          animate={
+            isInViewFooter ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }
+          }
           transition={{ duration: 0.5 }}
           className="mt- flex justify-start w-full lg:ml-200 md:ml-30"
         >
