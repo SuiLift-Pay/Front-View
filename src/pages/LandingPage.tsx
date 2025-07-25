@@ -1,5 +1,4 @@
 import { useRef } from "react";
-import { IoIosNotifications, IoIosContact } from "react-icons/io";
 import {
   FaWallet,
   FaExchangeAlt,
