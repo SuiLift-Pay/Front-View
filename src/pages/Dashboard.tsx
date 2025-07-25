@@ -7,8 +7,8 @@ import FundingOption from "../components/FundingOption";
 import Transaction from "../components/Transaction";
 import Settings from "../components/Settings";
 
-const Dashboard = () => {
-  const [selectedSection, setSelectedSection] = useState("profile");
+const Dashboard: React.FC = () => {
+  const [selectedSection, setSelectedSection] = useState<string>("profile");
 
   const renderContent = () => {
     switch (selectedSection) {
@@ -29,10 +29,11 @@ const Dashboard = () => {
 
   return (
     <main className="flex">
-      <Sidebar onSelectSection={setSelectedSection} />
-      <div className="flex-1 p-6 min-h-screen">
-        {renderContent()}
-      </div>
+      <Sidebar
+        onSelectSection={setSelectedSection}
+        selectedSection={selectedSection}
+      />
+      <div className="flex-1 p-6 min-h-screen">{renderContent()}</div>
     </main>
   );
 };

@@ -1,5 +1,3 @@
-import React from "react";
-
 const FundingOption = () => {
   return (
     <div className="p-6">

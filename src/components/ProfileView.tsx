@@ -1,5 +1,3 @@
-import React from "react";
-
 const ProfileView = () => {
   return (
     <div className="p-6">
