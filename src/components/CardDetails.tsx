@@ -1,5 +1,6 @@
 import { FaBolt, FaGlobe, FaShieldAlt, FaCoins } from "react-icons/fa";
 import { FaCheckCircle } from "react-icons/fa";
+import Card from "./Card";
 
 import Header from "./Header";
 
@@ -8,7 +9,7 @@ const CardDetails = () => {
   const walletAddress = "0x345d...6819 45p9u4";
 
   return (
-    <div className="p-6">
+    <div className="p-6 md:px-6 lg:px-10">
       {/* Header */}
       <Header name={name} walletAddress={walletAddress} />
       {/* Profile */}
@@ -49,20 +50,12 @@ const CardDetails = () => {
           {/* Card + Benefits */}
           <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6 ">
             {/* Virtual Card Preview with Custom Background */}
-            <div className="container">
+            <div
+              className="flex flex-col gap-5
+            "
+            >
               <p className="text-sm mb-2">Virtual Card</p>
-              <div
-                className="rounded-lg relative text-white p- w-[50%] h-[80%] bg-cover bg-center"
-                style={{ backgroundImage: "url('/images/Frame 2963.svg')" }}
-              >
-                <p className="text-md tracking-wides font-mono absolute left-[60%] transform translate-y-6">
-                  Emmanuel Samuel
-                </p>
-                {/* Card Number */}
-                <p className="text-2xl tracking-widest font-mono absolute top-1/2 left-6 transform -translate-y-1/2">
-                  1234 5678 8900 000
-                </p>
-              </div>
+              <Card />
             </div>
 
             {/* Benefits List */}

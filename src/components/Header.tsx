@@ -56,6 +56,7 @@ import { useState } from "react";
 import { FaRegCopy, FaCheck } from "react-icons/fa";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 
+
 interface HeaderProps {
   name?: string;
   className?: string;
