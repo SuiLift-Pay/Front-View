@@ -128,24 +128,14 @@ const LandingPage = () => {
             </a>
           </motion.nav>
           <main className="flex items-center space-x-2 bg-no-repeat bg-right">
-            <IoIosNotifications className="w-10 h-10" />
-            <IoIosContact className="w-10 h-10" />
+            <Link
+              to="/signin"
+              className="border hover:bg-blue-700 px-6 py-2 rounded-full font-semibold"
+            >
+              Launch Now
+            </Link>
           </main>
         </motion.header>
-        <div className="flex items-center justify-center p-4 space-x-4">
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600"
-          >
-            New Features
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            className="bg-transparent text-white border border-white px-4 py-2 rounded-full flex items-center hover:bg-gray-800"
-          >
-            Check out team dashboard <span className="ml-2">→</span>
-          </motion.button>
-        </div>
       </section>
 
       {/* Hero Section */}
@@ -191,6 +181,12 @@ const LandingPage = () => {
             className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-full font-semibold"
           >
             Launch App
+          </Link>
+          <Link
+            to="/signin"
+            className="border hover:bg-blue-700 px-6 py-2 rounded-full font-semibold"
+          >
+            Search
           </Link>
         </motion.div>
       </motion.section>

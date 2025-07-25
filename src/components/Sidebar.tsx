@@ -1,5 +1,3 @@
-// components/Sidebar.tsx
-import React from "react";
 import {
   FaUser,
   FaCreditCard,
