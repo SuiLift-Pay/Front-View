@@ -1,46 +1,16 @@
-import {
-  FaCheckCircle,
-  FaCreditCard,
-  FaRegCopy,
-  FaCheck,
-} from "react-icons/fa";
+import { FaCheckCircle, FaCreditCard } from "react-icons/fa";
 import { MdSecurity } from "react-icons/md";
 import { BsFillShieldLockFill } from "react-icons/bs";
-
-import { useState } from "react";
+import Header from "./Header";
 
 const ProfileView = () => {
+  const name = "Mark Millian";
   const walletAddress = "0x345d...6819 45p9u4";
-  const [copied, setCopied] = useState(false);
-  const handleCopy = () => {
-    navigator.clipboard.writeText(walletAddress);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-
   return (
     <div className="p-6">
       <div className="min-h-screen bg-black text-white md:px-6 lg:px-30 py-6 font-sans">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-xl font-semibold">Hi Mark Millian!</h1>
-          <div className="flex gap-4 items-center">
-            <span className="bg-gray-800 px-4 py-1 rounded text-sm">
-              wallet: {walletAddress}
-            </span>
-            <button
-              className="ml-2 px-2 py-1 bg-gray-700 rounded hover:bg-gray-600 border border-gray-600 flex items-center"
-              onClick={handleCopy}
-              aria-label="Copy wallet address"
-            >
-              {copied ? (
-                <FaCheck className="text-green-400 text-base" />
-              ) : (
-                <FaRegCopy className="text-white text-base" />
-              )}
-            </button>
-          </div>
-        </div>
+        <Header name={name} walletAddress={walletAddress} />
 
         {/* Profile Info */}
         <div className="bg-gray-900 rounded-xl p-6 mb-8">
