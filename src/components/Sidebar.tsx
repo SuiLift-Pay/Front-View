@@ -1,10 +1,4 @@
-import {
-  FaUser,
-  FaCreditCard,
-  FaWallet,
-  FaHistory,
-  FaSignOutAlt,
-} from "react-icons/fa";
+import { FaUser, FaCreditCard, FaWallet, FaHistory } from "react-icons/fa";
 import Logout from "./Logout";
 
 interface SidebarProps {

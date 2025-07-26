@@ -1,5 +1,5 @@
 import { FaBolt, FaGlobe, FaShieldAlt, FaCoins } from "react-icons/fa";
-import { FaCheckCircle } from "react-icons/fa";
+
 import Card from "./Card";
 
 import Header from "./Header";
