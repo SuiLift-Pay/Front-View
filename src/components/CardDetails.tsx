@@ -5,32 +5,14 @@ import Card from "./Card";
 import Header from "./Header";
 
 const CardDetails = () => {
-  const name = "Mark Millian";
-  const walletAddress = "0x345d...6819 45p9u4";
-
   return (
     <div className="p-6 md:px-6 lg:px-10">
       {/* Header */}
-      <Header name={name} walletAddress={walletAddress} />
+      <Header />
       {/* Profile */}
       <div className="bg-gray-900 rounded-xl p-6 mb-8 h-auto">
-        <div className="flex items-center gap-4 mb-6">
-          <img
-            src="/images/user.jpg"
-            alt="User"
-            className="w-14 h-14 rounded-full border"
-          />
-          <div>
-            <h2 className="text-lg font-semibold">Mark Millian</h2>
-            <p className="text-green-500 text-sm font-medium flex items-center gap-1">
-              <FaCheckCircle />
-              KYC: VERIFIED
-            </p>
-          </div>
-        </div>
-
         {/* Card Header */}
-        <div className="border-t border-gray-700 pt-4">
+        <div className="">
           <h3 className="text-lg font-semibold mb-2">Card</h3>
           <p className="text-sm text-gray-400 mb-6">
             Use your digital assets like cash. Instantly pay online or in-store
@@ -50,10 +32,7 @@ const CardDetails = () => {
           {/* Card + Benefits */}
           <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6 ">
             {/* Virtual Card Preview with Custom Background */}
-            <div
-              className="flex flex-col gap-5
-            "
-            >
+            <div className="flex flex-col gap-5">
               <p className="text-sm mb-2">Virtual Card</p>
               <Card />
             </div>

@@ -1,72 +1,52 @@
-import { FaCheckCircle, FaCreditCard } from "react-icons/fa";
-import { MdSecurity } from "react-icons/md";
-import { BsFillShieldLockFill } from "react-icons/bs";
+import { FaCheckCircle } from "react-icons/fa";
+
 import Header from "./Header";
 
-const ProfileView = () => {
-  const name = "Mark Millian";
-  const walletAddress = "0x345d...6819 45p9u4";
+interface ProfileViewProps {
+  onGetVirtualCard?: () => void;
+}
+
+const ProfileView: React.FC<ProfileViewProps> = ({ onGetVirtualCard }) => {
   return (
     <div className="p-6">
       <div className="min-h-screen bg-black text-white md:px-6 lg:px-30 py-6 font-sans">
         {/* Header */}
-        <Header name={name} walletAddress={walletAddress} />
+        <Header onGetVirtualCard={onGetVirtualCard} />
 
         {/* Profile Info */}
         <div className="bg-gray-900 rounded-xl p-6 mb-8">
-          <section className="flex justify-between items-center">
-            <div className="flex items-center gap-4 mb-4">
-              <img
-                src="/images/user.jpg"
-                alt="User"
-                className="w-14 h-14 rounded-full border"
-              />
-              <div>
-                <h2 className="text-lg font-semibold">Mark Millian</h2>
-                <p className="text-green-500 text-sm font-medium flex items-center gap-1">
-                  <FaCheckCircle className="text-green-500" />
-                  KYC: VERIFIED
-                </p>
-              </div>
-            </div>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm flex items-center gap-2">
-              <FaCreditCard />
-              Virtual Card
-            </button>
-          </section>
-
-          <div className="border-t border-gray-700 pt-4">
+          <div className="">
             <h3 className="text-md font-medium mb-2">Profile Overview</h3>
             <p className="text-sm text-gray-400 mb-4">
               Manage your Web3 Payment Card Account
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-4">
               {/* Account Status */}
-              <div className="bg-gray-800 rounded-lg p-4">
-                <p className="text-sm mb-2">Account Status</p>
+              <div className="bg-gray-800 rounded-lg p-4 flex flex-col items-center gap-2">
+                <p className="text-lg">Account Status</p>
+                <FaCheckCircle className="w-5 h-5 text-green-500" />
                 <p className="text-green-500 font-bold flex items-center gap-1">
-                  <FaCheckCircle />
                   KYC: VERIFIED
                 </p>
               </div>
 
               {/* Total Balance */}
-              <div className="bg-gray-800 rounded-lg p-4">
-                <p className="text-sm mb-1">Total Balance</p>
-                <p className="text-xl font-bold">$2,350</p>
-                <p className="text-xs text-green-400">100 SUI + 500 USDC</p>
+              <div className="bg-gray-800 rounded-lg p-4 flex flex-col items-center gap-2">
+                <p className="text-lg ">$ SUI Balance</p>
+                <p className="text-xl font-bold">100</p>
+                <p className="text-md text-green-400">$2,35</p>
               </div>
 
               {/* Monthly Spending */}
-              <div className="bg-gray-800 rounded-lg p-4">
-                <p className="text-sm mb-1">Monthly Spending</p>
-                <p className="text-xl font-bold">$500.38</p>
-                <p className="text-xs text-green-400">+12% from last month</p>
+              <div className="bg-gray-800 rounded-lg p-4 flex flex-col items-center gap-2">
+                <p className="text-lg">Total Spent</p>
+                <p className="text-xl font-bold">50.38</p>
+                <p className="text-md text-green-400">$1,15</p>
               </div>
 
               {/* Spending Limit */}
-              <div className="bg-gray-800 rounded-lg p-4">
+              {/* <div className="bg-gray-800 rounded-lg p-4">
                 <p className="text-sm mb-1">Spending Limit</p>
                 <p className="text-xl font-bold">$700</p>
                 <p className="text-xs text-green-400">$500 / $700 Used</p>
@@ -76,16 +56,16 @@ const ProfileView = () => {
                     style={{ width: "71%" }}
                   ></div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
 
         {/* Quick Action */}
         <div>
-          <h3 className="text-md font-medium mb-3">Quick Action</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-900 rounded-xl p-6 mb-8">
-            {/* Fund Card */}
+          {/* <h3 className="text-md font-medium mb-3">Quick Action</h3> */}
+          {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-900 rounded-xl p-6 mb-8">
+            
             <button className="bg-gray-800 rounded-xl p-4 text-left hover:bg-gray-700">
               <div className="flex flex-col items-center gap-2 mb-2">
                 <FaCreditCard className="text-green-600 text-xl" />
@@ -94,7 +74,7 @@ const ProfileView = () => {
               </div>
             </button>
 
-            {/* Manage Card Security */}
+            
             <button className="bg-gray-800 rounded-xl p-4 text-left hover:bg-gray-700">
               <div className="flex flex-col items-center gap-2 mb-2">
                 <MdSecurity className="text-blue-600 text-xl" />
@@ -103,7 +83,7 @@ const ProfileView = () => {
               </div>
             </button>
 
-            {/* View Reports */}
+            
             <button className="bg-gray-800 rounded-xl p-4 text-left hover:bg-gray-700">
               <div className="flex flex-col items-center gap-2 mb-2">
                 <BsFillShieldLockFill className="text-purple-600 text-xl" />
@@ -111,7 +91,7 @@ const ProfileView = () => {
                 <p className="text-sm text-gray-400">View Detail Reports</p>
               </div>
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

@@ -4,8 +4,8 @@ import Sidebar from "../components/Sidebar";
 import ProfileView from "../components/ProfileView";
 import CardDetails from "../components/CardDetails";
 import FundingOption from "../components/FundingOption";
-import Transaction from "../components/Transaction";
-import Settings from "../components/Settings";
+import Activity from "../components/Activity";
+import Logout from "../components/Logout";
 
 const Dashboard: React.FC = () => {
   const [selectedSection, setSelectedSection] = useState<string>("profile");
@@ -13,17 +13,21 @@ const Dashboard: React.FC = () => {
   const renderContent = () => {
     switch (selectedSection) {
       case "profile":
-        return <ProfileView />;
+        return (
+          <ProfileView onGetVirtualCard={() => setSelectedSection("card")} />
+        );
       case "card":
         return <CardDetails />;
       case "funding":
         return <FundingOption />;
-      case "transaction":
-        return <Transaction />;
-      case "settings":
-        return <Settings />;
+      case "activity":
+        return <Activity />;
+      case "logout":
+        return <Logout />;
       default:
-        return <ProfileView />;
+        return (
+          <ProfileView onGetVirtualCard={() => setSelectedSection("card")} />
+        );
     }
   };
 
@@ -33,7 +37,7 @@ const Dashboard: React.FC = () => {
         onSelectSection={setSelectedSection}
         selectedSection={selectedSection}
       />
-      <div className="flex-1 p-6 min-h-screen">{renderContent()}</div>
+      <div className="flex-1 p-6 min-h-screen ml-64">{renderContent()}</div>
     </main>
   );
 };

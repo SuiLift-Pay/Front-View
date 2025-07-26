@@ -1,6 +1,4 @@
-
-
-const Transaction = () => {
+const Activity = () => {
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold">Transaction</h2>
@@ -12,4 +10,4 @@ const Transaction = () => {
   );
 };
 
-export default Transaction;
+export default Activity;

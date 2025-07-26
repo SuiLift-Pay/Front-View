@@ -27,10 +27,10 @@ const Card = () => {
             </p>
           </div>
           {/* Back Side */}
-          <div className="absolute inset-0 rounded-lg bg-gray-900 flex flex-col justify-center items-center [transform:rotateY(180deg)] [backface-visibility:hidden] border border-gray-700">
-            <div className="w-3/4 h-6 bg-gray-700 mb-6 rounded"></div>
+          <div className="absolute inset-0 rounded-lg bg-blue-600 flex flex-col justify-center items-center [transform:rotateY(180deg)] [backface-visibility:hidden] border border-gray-700">
+            <div className="w-3/4 h-6 bg-gray-500 mb-6 rounded"></div>
             <div className="w-2/3 flex flex-col items-end">
-              <span className="text-xs text-gray-400 mb-1">CVV</span>
+              <span className="text-xs text-gray-200 mb-1">CVV</span>
               <span className="bg-white text-black px-4 py-1 rounded font-mono tracking-widest text-lg">
                 123
               </span>
