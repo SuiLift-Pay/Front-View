@@ -129,6 +129,7 @@ import {
   type AuthProvider,
 } from "@mysten/enoki";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export default function Signin() {
   const currentAccount = useCurrentAccount();
@@ -155,11 +156,13 @@ export default function Signin() {
         <main className="border bg-gray-800/70 backdrop-blur-md px-4 py-8 sm:px-8 sm:py-10 md:px-12 md:py-15 rounded-2xl shadow-2xl w-full max-w-md sm:max-w-lg md:max-w-xl text-white">
           <section className="border px-4 py-8 sm:px-8 sm:py-10 md:px-12 md:py-15 rounded-2xl shadow-2xl w-full text-white">
             <div className="text-center mb-">
-              <img
-                src="images/logo.svg"
-                alt="SuiLift Logo"
-                className="mx-auto w-50 h-50 -mt-15"
-              />
+              <Link to="/">
+                <img
+                  src="images/logo.svg"
+                  alt="SuiLift Logo"
+                  className="mx-auto w-50 h-50 -mt-15"
+                />
+              </Link>
 
               <p className="text-xl -mt-15">Start Spending Crypto Instantly</p>
               {googleWallet && (

@@ -101,28 +101,43 @@ const LandingPage = () => {
           <img
             src="/images/logo.svg"
             alt="SuiLift Logo"
-            className="w-15 h-15"
+            className="lg:w-50 lg:h-30 md:w-20"
           />
           <motion.nav
             initial={{ opacity: 0 }}
             animate={isInViewNavbar ? { opacity: 1 } : { opacity: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="bg-blue-500 rounded-full p-3 flex items-center md:space-x-7 lg:space-x-16 md:text-xl lg:text-2xl"
+            className="bg-blue-00 rounded-full p-3 flex items-center md:space-x-7 lg:space-x-16 md:text-xl lg:text-2xl"
           >
-            <a href="#home" className="hover:text-blue-500">
+            <a
+              href="#home"
+              className="hover:text-blue-500 md:text-sm lg:text-lg"
+            >
               Home
             </a>
-            <a href="#home" className="hover:text-blue-500">
+            <a
+              href="#home"
+              className="hover:text-blue-500 md:text-sm lg:text-lg"
+            >
               About
             </a>
 
-            <a href="#features" className="hover:text-blue-500">
+            <a
+              href="#features"
+              className="hover:text-blue-500 md:text-sm lg:text-lg"
+            >
               Features
             </a>
-            <a href="#how-it-works" className="hover:text-blue-500">
+            <a
+              href="#how-it-works"
+              className="hover:text-blue-500 md:text-sm lg:text-lg"
+            >
               How it works
             </a>
-            <a href="#faq" className="hover:text-blue-500">
+            <a
+              href="#faq"
+              className="hover:text-blue-500 md:text-sm lg:text-lg"
+            >
               FAQ
             </a>
           </motion.nav>
