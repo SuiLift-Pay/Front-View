@@ -6,9 +6,5 @@ body {
 }
 
 .signin-page {
-  background-image: url("images/background.svg");
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-position: center;
+  /* Background image now handled inline in component */
 }

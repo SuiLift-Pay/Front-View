@@ -15,6 +15,9 @@ import { BsCurrencyDollar } from "react-icons/bs";
 import { FaSuitcase } from "react-icons/fa6";
 import { motion, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
+import browseImage from "/images/Browse.svg";
+import group8Image from "/images/Group 8.svg";
+import group10Image from "/images/Group 10.svg";
 
 const featureCards = [
   {
@@ -83,7 +86,7 @@ const LandingPage = () => {
         ref={refNavbar}
         className=""
         style={{
-          backgroundImage: "url('images/Browse.svg')",
+          backgroundImage: `url(${browseImage})`,
           backgroundSize: "620px 620px",
           backgroundPosition: "right",
           backgroundRepeat: "no-repeat",
@@ -159,7 +162,7 @@ const LandingPage = () => {
         animate={isInViewHero ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
         transition={{ duration: 0.8 }}
         style={{
-          backgroundImage: "url('images/Group 8.svg')",
+          backgroundImage: `url(${group8Image})`,
           backgroundSize: "",
           backgroundPosition: "right",
           backgroundRepeat: "no-repeat cover",
@@ -500,7 +503,7 @@ const LandingPage = () => {
       <section
         ref={refFooter}
         style={{
-          backgroundImage: "url('images/Group 10.svg')",
+          backgroundImage: `url(${group10Image})`,
           backgroundSize: "full",
           backgroundPosition: "center",
           backgroundRepeat: "no-repea cover",
