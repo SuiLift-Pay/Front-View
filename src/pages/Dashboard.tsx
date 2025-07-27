@@ -13,9 +13,7 @@ const Dashboard: React.FC = () => {
   const renderContent = () => {
     switch (selectedSection) {
       case "profile":
-        return (
-          <ProfileView onGetVirtualCard={() => setSelectedSection("card")} />
-        );
+        return <ProfileView />;
       case "card":
         return <CardDetails />;
       case "funding":
@@ -25,9 +23,7 @@ const Dashboard: React.FC = () => {
       case "logout":
         return <Logout />;
       default:
-        return (
-          <ProfileView onGetVirtualCard={() => setSelectedSection("card")} />
-        );
+        return <ProfileView />;
     }
   };
 

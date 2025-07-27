@@ -164,7 +164,7 @@ const LandingPage = () => {
           backgroundPosition: "right",
           backgroundRepeat: "no-repeat cover",
         }}
-        className="relative text-center py-20 px-4"
+        className="relative flex flex-col items-center text-center py-20 px-4"
       >
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
@@ -181,9 +181,16 @@ const LandingPage = () => {
           transition={{ delay: 0.3, duration: 0.5 }}
           className="text-md sm:text-lg text-gray-300 mb-6"
         >
-          Powering the Future, One Lift at a Time <br />
-          <span className="text-green-400 font-bold">Powered By SUI</span>
+          Powering the Future, One Lift at a Time
         </motion.p>
+        <span className="mb-4 flex items-center gap-2">
+          <img
+            src="/images/sui.svg"
+            alt="SuiLift Cube"
+            className="w-5 md:w-5"
+          />
+          <span className="text-green-400 font-bold">Powered By SUI</span>
+        </span>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInViewHero ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}

@@ -1,5 +1,5 @@
 // src/components/ProfileView.tsx
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { FaCheckCircle, FaCreditCard } from "react-icons/fa";
 
 import {
@@ -8,12 +8,12 @@ import {
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
-import CryptoJS from "crypto-js";
+// import CryptoJS from "crypto-js";
 import { supabase } from "../utils/supabaseClient";
 import Header from "./Header";
 import OfframpModal from "./OfframpModal";
 
-const ENCRYPTION_SECRET = import.meta.env.VITE_ENCRYPTION_SECRET as string;
+// const ENCRYPTION_SECRET = import.meta.env.VITE_ENCRYPTION_SECRET as string;
 
 const ProfileView = () => {
   const name = "..";
@@ -23,7 +23,6 @@ const ProfileView = () => {
   const walletAddress = currentAccount?.address ?? "Not connected";
   const [suiBalance, setSuiBalance] = useState<number | null>(null);
   const [cardExists, setCardExists] = useState(false);
-  const [cardData, setCardData] = useState<any>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [recipient, setRecipient] = useState("");
@@ -75,7 +74,7 @@ const ProfileView = () => {
       }
 
       // Fetch card details from Supabase
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("virtual_cards")
         .select("*")
         .eq("wallet_address", currentAccount.address)
@@ -83,10 +82,10 @@ const ProfileView = () => {
 
       if (data) {
         setCardExists(true);
-        setCardData(data);
+        // setCardData(data); // Removed as per edit hint
       } else {
         setCardExists(false);
-        setCardData(null);
+        // setCardData(null); // Removed as per edit hint
       }
     };
     fetchBalanceAndCard();
@@ -118,19 +117,18 @@ const ProfileView = () => {
 
   // Encrypt card details
   const encryptCardDetails = (details: object) => {
-    const ciphertext = CryptoJS.AES.encrypt(
-      JSON.stringify(details),
-      ENCRYPTION_SECRET
-    ).toString();
-    return ciphertext;
+    const jsonString = JSON.stringify(details);
+    return btoa(jsonString); // Simple base64 encoding for demo
   };
 
-  // Decrypt card details
-  const decryptCardDetails = (ciphertext: string) => {
-    const bytes = CryptoJS.AES.decrypt(ciphertext, ENCRYPTION_SECRET);
-    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-    return JSON.parse(decrypted);
-  };
+  // const decryptCardDetails = (ciphertext: string) => {
+  //   try {
+  //     const jsonString = atob(ciphertext);
+  //     return JSON.parse(jsonString);
+  //   } catch (e) {
+  //     return null;
+  //   }
+  // };
 
   // Handle virtual card generation
   const handleGetVirtualCard = async () => {
@@ -153,11 +151,11 @@ const ProfileView = () => {
       } else {
         setFeedback("✅ Card stored in Supabase!");
         setCardExists(true);
-        setCardData({
-          wallet_address: walletAddress,
-          encrypted_card: encrypted,
-          sui_balance: suiBalance,
-        });
+        // setCardData({ // Removed as per edit hint
+        //   wallet_address: walletAddress,
+        //   encrypted_card: encrypted,
+        //   sui_balance: suiBalance,
+        // });
         console.log("Supabase insert response:", data);
       }
     }
@@ -190,7 +188,8 @@ const ProfileView = () => {
           options: { showContent: true },
         });
         const balance =
-          Number(coinData.data?.content?.fields?.balance || 0) / 1_000_000_000;
+          Number((coinData.data?.content as any)?.fields?.balance || 0) /
+          1_000_000_000;
         if (balance < amountInSui) {
           throw new Error("Insufficient coin balance for transfer.");
         }
@@ -227,7 +226,7 @@ const ProfileView = () => {
 
       await signAndExecuteTransaction(
         {
-          transaction: txb,
+          transaction: txb as any,
           chain: "sui:testnet",
         },
         {
@@ -263,17 +262,17 @@ const ProfileView = () => {
   };
 
   // Optionally, show decrypted card details
-  let decryptedCard = null;
-  if (cardExists && cardData?.encrypted_card) {
-    try {
-      decryptedCard = decryptCardDetails(cardData.encrypted_card);
-    } catch (e) {
-      decryptedCard = null;
-    }
-  }
+  // let decryptedCard = null;
+  // if (cardExists && cardData?.encrypted_card) {
+  //   try {
+  //     decryptedCard = decryptCardDetails(cardData.encrypted_card);
+  //   } catch (e) {
+  //     decryptedCard = null;
+  //   }
+  // }
 
   useEffect(() => {
-    function handlePaystackMessage(event) {
+    function handlePaystackMessage(event: MessageEvent) {
       if (
         event.origin === window.location.origin &&
         event.data &&

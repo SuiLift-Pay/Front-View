@@ -138,7 +138,7 @@ interface HeaderProps {
   walletAddress?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ name = "..", walletAddress = "" }) => {
+const Header: React.FC<HeaderProps> = ({ walletAddress = "" }) => {
   const currentAccount = useCurrentAccount();
   const { mutate: disconnectWallet } = useDisconnectWallet(); // Added disconnect hook
   const fullAddress = currentAccount?.address ?? "Not connected";

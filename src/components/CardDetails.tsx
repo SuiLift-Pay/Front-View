@@ -95,13 +95,7 @@
 // export default CardDetails;
 
 import { useEffect, useState } from "react";
-import {
-  FaBolt,
-  FaGlobe,
-  FaShieldAlt,
-  FaCoins,
-  FaCheckCircle,
-} from "react-icons/fa";
+import { FaBolt, FaGlobe, FaShieldAlt, FaCoins } from "react-icons/fa";
 import Card from "./Card";
 import Header from "./Header";
 import { useCurrentAccount } from "@mysten/dapp-kit";
@@ -126,7 +120,7 @@ const CardDetails = () => {
   useEffect(() => {
     const fetchCard = async () => {
       if (!walletAddress) return;
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("virtual_cards")
         .select("encrypted_card")
         .eq("wallet_address", walletAddress)
