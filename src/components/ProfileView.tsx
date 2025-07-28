@@ -1,6 +1,11 @@
 // src/components/ProfileView.tsx
 import { useState, useEffect } from "react";
-import { FaCheckCircle, FaCreditCard } from "react-icons/fa";
+import {
+  FaCheckCircle,
+  FaCreditCard,
+  FaImage,
+  FaExchangeAlt,
+} from "react-icons/fa";
 
 import {
   useCurrentAccount,
@@ -12,6 +17,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import { supabase } from "../utils/supabaseClient";
 import Header from "./Header";
 import OfframpModal from "./OfframpModal";
+import InstantNftSaleModal from "./InstantNftSaleModal";
 
 // const ENCRYPTION_SECRET = import.meta.env.VITE_ENCRYPTION_SECRET as string;
 
@@ -38,6 +44,7 @@ const ProfileView = () => {
   const [transferError, setTransferError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isOfframpOpen, setIsOfframpOpen] = useState(false);
+  const [isInstantNftSaleOpen, setIsInstantNftSaleOpen] = useState(false);
 
   // Your deployed package ID
   const PACKAGE_ID =
@@ -373,7 +380,7 @@ const ProfileView = () => {
               onClick={() => setIsOfframpOpen(true)}
             >
               <div className="flex flex-col items-center gap-2 mb-2">
-                <FaCreditCard className="text-green-600 text-xl" />
+                <FaExchangeAlt className="text-green-600 text-xl" />
                 <p className="text-lg font-semibold">Offramp</p>
                 <p className="text-sm text-gray-400">Send $SUI, Get fiat</p>
               </div>
@@ -382,6 +389,25 @@ const ProfileView = () => {
             <OfframpModal
               open={isOfframpOpen}
               onClose={() => setIsOfframpOpen(false)}
+            />
+
+            {/* Instant NFT Sale Button */}
+            <button
+              className="bg-gray-800 rounded-xl p-4 text-left hover:bg-gray-700 mt-4"
+              onClick={() => setIsInstantNftSaleOpen(true)}
+            >
+              <div className="flex flex-col items-center gap-2 mb-2">
+                <FaImage className="text-purple-600 text-xl" />
+                <p className="text-lg font-semibold">Instant NFT Sale</p>
+                <p className="text-sm text-gray-400">
+                  Sell NFT for instant payout
+                </p>
+              </div>
+            </button>
+
+            <InstantNftSaleModal
+              open={isInstantNftSaleOpen}
+              onClose={() => setIsInstantNftSaleOpen(false)}
             />
           </div>
         </div>

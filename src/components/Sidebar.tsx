@@ -1,7 +1,6 @@
 import { FaUser, FaCreditCard, FaWallet, FaHistory } from "react-icons/fa";
 import { useState } from "react";
 import Logout from "./Logout";
-import { ConnectButton } from "@mysten/dapp-kit";
 
 interface SidebarProps {
   onSelectSection: (section: string) => void;
@@ -120,7 +119,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <span>Recent Activity</span>
               </li>
               <Logout />
-              <ConnectButton />
             </ul>
           </div>
         </nav>
