@@ -43,7 +43,7 @@ const SigninContent: React.FC = () => {
           <section className="border px-4 py-8 sm:px-8 sm:py-10 md:px-12 md:py-15 rounded-2xl shadow-2xl w-full text-white">
             <div className="text-center mb-">
               <img
-                src="images/logo.svg"
+                src="/images/logo.svg"
                 alt="SuiLift Logo"
                 className="mx-auto w-50 h-50 -mt-15"
               />

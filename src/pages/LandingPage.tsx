@@ -1,10 +1,11 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   FaWallet,
   FaExchangeAlt,
   FaRegCreditCard,
   FaBolt,
   FaShieldAlt,
+  FaPlay,
 } from "react-icons/fa";
 import { FaUserCircle } from "react-icons/fa";
 import { HiOutlineCreditCard } from "react-icons/hi";
@@ -80,6 +81,8 @@ const LandingPage = () => {
   const isInViewHeading = useInView(refHeading, { once: false });
   const isInViewFooter = useInView(refFooter, { once: false });
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <main className="">
       <section
@@ -99,18 +102,41 @@ const LandingPage = () => {
             isInViewNavbar ? { y: 0, opacity: 1 } : { y: -100, opacity: 0 }
           }
           transition={{ duration: 0.5 }}
-          className="flex justify-between items-center md:px-30 lg:px-50 py-20"
+          className="flex justify-between items-center md:px-30 lg:px-50 py-6 px-4 relative"
         >
           <img
             src="/images/logo.svg"
             alt="SuiLift Logo"
-            className="lg:w-50 lg:h-30 md:w-20"
+            className="lg:w-50 lg:h-30 md:w-20 w-20"
           />
+          {/* Hamburger for mobile */}
+          <button
+            className="md:hidden flex flex-col justify-center items-center w-10 h-10 focus:outline-none z-30"
+            aria-label="Toggle navigation menu"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+          >
+            <span
+              className={`block w-6 h-0.5 bg-blue-500 mb-1 transition-all duration-300 ${
+                mobileMenuOpen ? "rotate-45 translate-y-2" : ""
+              }`}
+            ></span>
+            <span
+              className={`block w-6 h-0.5 bg-blue-500 mb-1 transition-all duration-300 ${
+                mobileMenuOpen ? "opacity-0" : ""
+              }`}
+            ></span>
+            <span
+              className={`block w-6 h-0.5 bg-blue-500 transition-all duration-300 ${
+                mobileMenuOpen ? "-rotate-45 -translate-y-2" : ""
+              }`}
+            ></span>
+          </button>
+          {/* Desktop Nav */}
           <motion.nav
             initial={{ opacity: 0 }}
             animate={isInViewNavbar ? { opacity: 1 } : { opacity: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="bg-blue-00 rounded-full p-3 flex items-center md:space-x-7 lg:space-x-16 md:text-xl lg:text-2xl"
+            className="bg-blue-00 rounded-full p-3 items-center md:space-x-7 lg:space-x-16 md:text-xl lg:text-2xl hidden md:flex"
           >
             <a
               href="#home"
@@ -124,7 +150,6 @@ const LandingPage = () => {
             >
               About
             </a>
-
             <a
               href="#features"
               className="hover:text-blue-500 md:text-sm lg:text-lg"
@@ -144,7 +169,7 @@ const LandingPage = () => {
               FAQ
             </a>
           </motion.nav>
-          <main className="flex items-center space-x-2 bg-no-repeat bg-right">
+          <main className="items-center space-x-2 bg-no-repeat bg-right hidden md:flex">
             <Link
               to="/signin"
               className="border hover:bg-blue-700 px-6 py-2 rounded-full font-semibold"
@@ -152,6 +177,66 @@ const LandingPage = () => {
               Launch Now
             </Link>
           </main>
+          {/* Mobile Menu Overlay */}
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-20 md:hidden"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <nav
+                className="flex flex-col gap-8 text-2xl text-white items-center"
+                aria-label="Mobile navigation menu"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <a
+                  href="#home"
+                  className="hover:text-blue-400"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Home
+                </a>
+                <a
+                  href="#home"
+                  className="hover:text-blue-400"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  About
+                </a>
+                <a
+                  href="#features"
+                  className="hover:text-blue-400"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Features
+                </a>
+                <a
+                  href="#how-it-works"
+                  className="hover:text-blue-400"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  How it works
+                </a>
+                <a
+                  href="#faq"
+                  className="hover:text-blue-400"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  FAQ
+                </a>
+                <Link
+                  to="/signin"
+                  className="border hover:bg-blue-700 px-6 py-2 rounded-full font-semibold text-white text-lg mt-4"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Launch Now
+                </Link>
+              </nav>
+            </motion.div>
+          )}
         </motion.header>
       </section>
 
@@ -216,13 +301,13 @@ const LandingPage = () => {
       </motion.section>
       <section
         id="about"
-        className="md:-mt-15 lg:-mt-18 px-6 py- relative grid grid-cols-1 md:grid-cols-2 gap-10 items-center"
+        className="mt-4 px-4 py-4 md:-mt-20  grid grid-cols-1 md:grid-cols-2 gap-10 items-center"
       >
-        <div className="px-10">
-          <h2 className="text-5xl font-bold mb-4 text-blue-400">
+        <div className="px-0 md:px-10 md:z-20">
+          <h2 className="text-3xl md:text-5xl font-bold mb-4 text-blue-400">
             About <span className="text-white">SuiLift</span>
           </h2>
-          <p className="text-gray-300 md:text-md lg:text-xl leading-relaxed">
+          <p className="text-gray-300 text-base md:text-lg lg:text-xl leading-relaxed">
             Built for the next era of finance, our platform lets you spend SUI
             tokens effortlessly through a virtual card accepted worldwide. With
             real-time conversion and secure on-chain storage, we connect the
@@ -233,7 +318,7 @@ const LandingPage = () => {
           <img
             src="/images/suilift logo.svg"
             alt="SuiLift Cube"
-            className="w-40 md:w-56"
+            className="w-32 md:w-56 md:z-20"
           />
         </div>
       </section>
@@ -241,12 +326,12 @@ const LandingPage = () => {
       <section
         ref={refWhy}
         id="why"
-        className="md:px-10 lg:px-60 py-16 text-center"
+        className="px-4 md:px-10 lg:px-60 py-8 md:py-16 text-center"
       >
-        <h2 className="md:text-3xl lg:text-5xl font-bold mb-2">
+        <h2 className="text-2xl md:text-3xl lg:text-5xl font-bold mb-2">
           Why <span className="text-blue-400">SuiLift</span>
         </h2>
-        <p className="text-gray-400 mb-10">
+        <p className="text-gray-400 mb-10 text-base md:text-lg">
           Unlock the future of payments with unmatched flexibility and control
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -267,9 +352,11 @@ const LandingPage = () => {
           ))}
         </div>
       </section>
-      <section className="flex flex-col gap-5 items-center text-center px-60">
-        <h1 className="text-3xl">Pay With with Crypto in three simple text</h1>
-        <h1 className="text-xl">
+      <section className="flex flex-col gap-3 items-center text-center px-4 md:px-10 lg:px-60">
+        <h1 className="text-xl md:text-3xl">
+          Pay With Crypto in three simple steps
+        </h1>
+        <h1 className="text-base md:text-xl">
           From Funding to spending, SuiLift Makes Web3 payment effortless
         </h1>
       </section>
@@ -279,23 +366,29 @@ const LandingPage = () => {
         initial={{ opacity: 0 }}
         animate={isInViewSteps ? { opacity: 1 } : { opacity: 0 }}
         transition={{ duration: 0.5 }}
-        className="mt-10 flex justify-center items-center w-full max-w-3xl mx-auto text-sm font-bold mb-10"
+        className="mt-10 flex justify-center items-center w-full max-w-3xl mx-auto text-xs md:text-sm font-bold mb-10 px-2"
       >
         <div className="flex items-center w-full">
-          <h2 className="bg-blue-500 rounded-full p-3 flex-shrink-0">01</h2>
-          <div className="flex-grow flex items-center mx-2">
+          <h2 className="bg-blue-500 rounded-full p-2 md:p-3 flex-shrink-0">
+            01
+          </h2>
+          <div className="flex-grow flex items-center mx-1 md:mx-2">
             <hr className="flex-grow h-px bg-gray-100 border-0" />
             <hr className="flex-grow h-px bg-gray-100 border-0" />
           </div>
-          <h2 className="bg-blue-500 rounded-full p-3 flex-shrink-0">02</h2>
-          <div className="flex-grow flex items-center mx-2">
+          <h2 className="bg-blue-500 rounded-full p-2 md:p-3 flex-shrink-0">
+            02
+          </h2>
+          <div className="flex-grow flex items-center mx-1 md:mx-2">
             <hr className="flex-grow h-px bg-gray-100 border-0" />
             <hr className="flex-grow h-px bg-gray-100 border-0" />
           </div>
-          <h2 className="bg-blue-500 rounded-full p-3 flex-shrink-0">03</h2>
+          <h2 className="bg-blue-500 rounded-full p-2 md:p-3 flex-shrink-0">
+            03
+          </h2>
         </div>
       </motion.div>
-      <div className="px-10 grid grid-cols-1 md:grid-cols-3 gap-6 text-left max-w-6xl mx-auto">
+      <div className="px-4 md:px-10 grid grid-cols-1 md:grid-cols-3 gap-6 text-left max-w-6xl mx-auto">
         {/* Step 1 */}
         <motion.div
           ref={refStep1}
@@ -384,7 +477,7 @@ const LandingPage = () => {
         </motion.div>
       </div>
       {/* Token → Card → Fiat */}
-      <div className="flex items-center justify-center gap-6 my-16 text-sm text-white flex-wrap">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 my-10 md:my-16 text-xs md:text-sm text-white flex-wrap px-4">
         <div className="flex items-center gap-2">
           <img
             src="/images/sui.svg"
@@ -408,39 +501,46 @@ const LandingPage = () => {
       </div>
 
       {/* CTAs */}
-      <div className="flex flex-col items-center gap-4 flex-wrap mb-4">
-        <div className="flex gap-5">
+      <div className="flex flex-col md:flex-col  items-center gap-4 flex-wrap mb-4 px-4">
+        <div className="flex flex-col sm:flex-row gap-3 md:gap-5 w-full md:w-auto">
           <motion.button
             whileHover={{ scale: 1.1 }}
-            className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-md font-semibold"
+            className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-md font-semibold w-full sm:w-auto"
           >
             Fund Your Card Now
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.1 }}
-            className="border border-white px-6 py-2 rounded-md font-semibold"
+            className="flex flex-row items-center justify-center gap-3 border border-white px-6 py-2 rounded-md font-semibold w-full sm:w-auto"
           >
+            <FaPlay
+              className="inline-block text-blue-400"
+              aria-label="Play video"
+            />
             Watch a Demo
           </motion.button>
         </div>
         {/* Video Link */}
-        <a href="#" className="text-blue-400 text-sm underline">
+        <a
+          href="#"
+          className="text-blue-400 text-sm underline mt-2 md:mt-0 flex items-center gap-2"
+        >
           60 Seconds explainer video
         </a>
       </div>
       {/* last card */}
       <div
         ref={refFeatures}
-        className="flex flex-col items-center justify-center p-6"
+        className="flex flex-col items-center justify-center p-4 md:p-6"
       >
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 md:mb-12">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={
               isInViewFeatures ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
             }
             transition={{ duration: 0.5 }}
-            className="text-4xl font-bold text-blue-400"
+            className="text-2xl md:text-4xl font-bold text-blue-400"
           >
             The Ultimate Crypto Payment Solution
           </motion.h1>
@@ -450,7 +550,7 @@ const LandingPage = () => {
               isInViewFeatures ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
             }
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-gray-400 mt-2"
+            className="text-gray-400 mt-2 text-base md:text-lg"
           >
             Combine the power of Web3 with the ease of traditional payments.
           </motion.p>
@@ -469,7 +569,7 @@ const LandingPage = () => {
               },
             },
           }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl"
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full"
         >
           {featureCards.map((card, idx) => (
             <motion.div
@@ -493,9 +593,9 @@ const LandingPage = () => {
         initial={{ opacity: 0, y: 50 }}
         animate={isInViewHeading ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
         transition={{ duration: 0.5 }}
-        className="text-center my-10"
+        className="text-center my-10 px-4"
       >
-        <h2 className="text-3xl md:text-4xl font-bold">
+        <h2 className="text-2xl md:text-4xl font-bold">
           Powering the <span className="text-blue-500">Future</span> of Payments
         </h2>
       </motion.div>
@@ -504,11 +604,11 @@ const LandingPage = () => {
         ref={refFooter}
         style={{
           backgroundImage: `url(${group10Image})`,
-          backgroundSize: "full",
+          backgroundSize: "cover",
           backgroundPosition: "center",
-          backgroundRepeat: "no-repea cover",
+          backgroundRepeat: "no-repeat",
         }}
-        className="flex flex-col items-center justify-center py- px-6"
+        className="flex flex-col items-center justify-center py-8 px-4 md:px-6"
       >
         <motion.div
           initial={{ opacity: 0, x: -50 }}
@@ -516,14 +616,18 @@ const LandingPage = () => {
             isInViewFooter ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }
           }
           transition={{ duration: 0.5 }}
-          className="mt- flex justify-start w-full lg:ml-200 md:ml-30"
+          className="mt-2 flex justify-start w-full lg:ml-40 md:ml-10"
         >
-          <img src="/images/logo.svg" alt="SuiLift Logo" className="h-16" />
+          <img
+            src="/images/logo.svg"
+            alt="SuiLift Logo"
+            className="h-12 md:h-16"
+          />
         </motion.div>
         {/* Footer Links */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 p-6 max-w-7xl w-full text-center place-items-center">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 p-4 md:p-6 max-w-7xl w-full text-center place-items-center">
           <div>
-            <h4 className="font-semibold text-lg md:text-xl lg:text-3xl">
+            <h4 className="font-semibold text-lg md:text-xl lg:text-2xl">
               Product
             </h4>
             <ul className="mt-2 space-y-1 text-base md:text-lg lg:text-xl">
@@ -534,7 +638,7 @@ const LandingPage = () => {
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold text-lg md:text-xl lg:text-3xl">
+            <h4 className="font-semibold text-lg md:text-xl lg:text-2xl">
               Company
             </h4>
             <ul className="mt-2 space-y-1 text-base md:text-lg lg:text-xl">
@@ -544,7 +648,7 @@ const LandingPage = () => {
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold text-lg md:text-xl lg:text-3xl">
+            <h4 className="font-semibold text-lg md:text-xl lg:text-2xl">
               Support
             </h4>
             <ul className="mt-2 space-y-1 text-base md:text-lg lg:text-xl">
@@ -569,8 +673,8 @@ const LandingPage = () => {
       </section>
 
       {/* Copyright */}
-      <div className="text-center text-sm py-4">
-        <p>Copyright © 2025 [Platform Name]. All rights reserved.</p>
+      <div className="text-center text-xs md:text-sm py-4 px-2">
+        <p>Copyright © 2025 [SuiLift]. All rights reserved.</p>
       </div>
     </main>
   );
