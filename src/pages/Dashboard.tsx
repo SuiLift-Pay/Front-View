@@ -33,7 +33,7 @@ const Dashboard: React.FC = () => {
         onSelectSection={setSelectedSection}
         selectedSection={selectedSection}
       />
-      <div className="flex-1 p-6 min-h-screen mr-5 md:ml-64">
+      <div className="flex-1 p-4 md:p-6 min-h-screen md:ml-64 max-w-7xl mx-auto w-full">
         {renderContent()}
       </div>
     </main>
