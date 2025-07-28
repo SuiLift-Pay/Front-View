@@ -8,7 +8,7 @@ import {
 } from "@mysten/dapp-kit";
 import { isEnokiWallet, type EnokiWallet } from "@mysten/enoki";
 import { useNavigate } from "react-router-dom";
-import backgroundImage from "/images/background.svg";
+import backgroundImage from "/images/background.png";
 
 const SigninContent: React.FC = () => {
   const currentAccount = useCurrentAccount();
