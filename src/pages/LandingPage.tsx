@@ -626,43 +626,43 @@ const LandingPage = () => {
         </motion.div>
         {/* Footer Links */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 p-4 md:p-6 max-w-7xl w-full text-center place-items-center">
-          <div>
+          <div className="flex flex-col items-start">
             <h4 className="font-semibold text-lg md:text-xl lg:text-2xl">
-              Product
+              Products
             </h4>
-            <ul className="mt-2 space-y-1 text-base md:text-lg lg:text-xl">
+            <ul className="flex flex-col items-start mt-2 space-y-1 text-base md:text-lg lg:text-xl">
               <li>- Features</li>
               <li>- How it Works</li>
               <li>- Funding Options</li>
               <li>- App Download</li>
             </ul>
           </div>
-          <div>
+          <div className="flex flex-col items-start">
             <h4 className="font-semibold text-lg md:text-xl lg:text-2xl">
               Company
             </h4>
-            <ul className="mt-2 space-y-1 text-base md:text-lg lg:text-xl">
+            <ul className="flex flex-col items-start mt-2 space-y-1 text-base md:text-lg lg:text-xl">
               <li>- About Us</li>
               <li>- Blog</li>
               <li>- Contact Us</li>
             </ul>
           </div>
-          <div>
+          <div className="flex flex-col items-start">
             <h4 className="font-semibold text-lg md:text-xl lg:text-2xl">
               Support
             </h4>
-            <ul className="mt-2 space-y-1 text-base md:text-lg lg:text-xl">
+            <ul className="flex flex-col items-start mt-2 space-y-1 text-base md:text-lg lg:text-xl">
               <li>- FAQ</li>
               <li>- Help Center</li>
               <li>- Privacy Policy</li>
               <li>- Terms of Service</li>
             </ul>
           </div>
-          <div>
+          <div className="flex flex-col items-start">
             <h4 className="font-semibold text-lg md:text-xl lg:text-2xl">
               Social
             </h4>
-            <ul className="mt-2 space-y-1 text-base md:text-lg lg:text-xl">
+            <ul className="flex flex-col items-start mt-2 space-y-1 text-base md:text-lg lg:text-xl">
               <li>- Twitter</li>
               <li>- Discord</li>
               <li>- Telegram</li>
