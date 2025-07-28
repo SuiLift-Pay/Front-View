@@ -5,6 +5,7 @@ import ProfileView from "../components/ProfileView";
 import CardDetails from "../components/CardDetails";
 import FundingOption from "../components/FundingOption";
 import Activity from "../components/Activity";
+import ProfilePage from "../components/Profile";
 import Logout from "../components/Logout";
 
 const Dashboard: React.FC = () => {
@@ -12,7 +13,7 @@ const Dashboard: React.FC = () => {
 
   const renderContent = () => {
     switch (selectedSection) {
-      case "profile":
+      case "dashboard":
         return <ProfileView />;
       case "card":
         return <CardDetails />;
@@ -20,6 +21,8 @@ const Dashboard: React.FC = () => {
         return <FundingOption />;
       case "activity":
         return <Activity />;
+      case "profile-settings":
+        return <ProfilePage />;
       case "logout":
         return <Logout />;
       default:

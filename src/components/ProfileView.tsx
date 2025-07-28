@@ -45,6 +45,7 @@ const ProfileView = () => {
   const [loading, setLoading] = useState(false);
   const [isOfframpOpen, setIsOfframpOpen] = useState(false);
   const [isInstantNftSaleOpen, setIsInstantNftSaleOpen] = useState(false);
+  const [transactions, setTransactions] = useState<any[]>([]);
 
   // Your deployed package ID
   const PACKAGE_ID =
@@ -74,6 +75,27 @@ const ProfileView = () => {
           coinData.data.map((coin) => ({
             coinObjectId: coin.coinObjectId,
             balance: (Number(coin.balance) / 1_000_000_000).toFixed(3),
+          }))
+        );
+
+        // Load recent transactions for total spent calculation
+        const txData = await suiClient.queryTransactionBlocks({
+          filter: { FromAddress: currentAccount.address },
+          limit: 50,
+          order: "descending",
+          options: {
+            showEffects: true,
+            showInput: true,
+          },
+        });
+
+        setTransactions(
+          txData.data.map((tx) => ({
+            digest: tx.digest,
+            type: "Transaction",
+            status: tx.effects?.status?.status || "Unknown",
+            gasUsed: tx.effects?.gasUsed,
+            timestamp: tx.timestampMs || undefined,
           }))
         );
       } catch (err: any) {
@@ -345,16 +367,40 @@ const ProfileView = () => {
 
               {/* Total Balance */}
               <div className="bg-gray-800 rounded-lg p-4 flex flex-col items-center gap-2">
-                <p className="text-lg ">$ SUI Balance</p>
-                <p className="text-xl font-bold">100</p>
-                <p className="text-md text-green-400">$2,35</p>
+                <p className="text-lg">$ SUI Balance</p>
+                <p className="text-xl font-bold">
+                  {suiBalance?.toFixed(4) || "0.0000"} SUI
+                </p>
+                <p className="text-md text-green-400">
+                  ${suiBalance ? (suiBalance * 4.16).toFixed(2) : "0.00"}
+                </p>
               </div>
 
               {/* Monthly Spending */}
               <div className="bg-gray-800 rounded-lg p-4 flex flex-col items-center gap-2">
                 <p className="text-lg">Total Spent</p>
-                <p className="text-xl font-bold">50.38</p>
-                <p className="text-md text-green-400">$1,15</p>
+                <p className="text-xl font-bold">
+                  {transactions
+                    .reduce((total, tx) => {
+                      const gasCost = tx.gasUsed?.computationCost
+                        ? Number(tx.gasUsed.computationCost) / 1000000000
+                        : 0;
+                      return total + gasCost;
+                    }, 0)
+                    .toFixed(4)}{" "}
+                  SUI
+                </p>
+                <p className="text-md text-green-400">
+                  $
+                  {(
+                    transactions.reduce((total, tx) => {
+                      const gasCost = tx.gasUsed?.computationCost
+                        ? Number(tx.gasUsed.computationCost) / 1000000000
+                        : 0;
+                      return total + gasCost;
+                    }, 0) * 4.16
+                  ).toFixed(2)}
+                </p>
               </div>
             </div>
           </div>
