@@ -9,7 +9,6 @@ import {
 import { isEnokiWallet, type EnokiWallet } from "@mysten/enoki";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import backgroundImage from "/images/background.png";
 
 const SigninContent: React.FC = () => {
   const currentAccount = useCurrentAccount();
@@ -33,7 +32,7 @@ const SigninContent: React.FC = () => {
       <main
         className="signin-page text-white flex justify-center items-center min-h-screen py-8 sm:py-12 md:py-20"
         style={{
-          backgroundImage: `url(${backgroundImage})`,
+          backgroundImage: `url('/images/background.png')`,
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
           backgroundAttachment: "fixed",
