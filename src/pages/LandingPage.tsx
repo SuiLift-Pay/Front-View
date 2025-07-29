@@ -16,9 +16,6 @@ import { BsCurrencyDollar } from "react-icons/bs";
 import { FaSuitcase } from "react-icons/fa6";
 import { motion, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
-import browseImage from "/images/Browse.svg";
-import group8Image from "/images/Group 8.svg";
-import group10Image from "/images/Group 10.svg";
 
 const featureCards = [
   {
@@ -89,7 +86,7 @@ const LandingPage = () => {
         ref={refNavbar}
         className=""
         style={{
-          backgroundImage: `url(${browseImage})`,
+          backgroundImage: `url('/images/Browse.svg')`,
           backgroundSize: "620px 620px",
           backgroundPosition: "right",
           backgroundRepeat: "no-repeat",
@@ -247,7 +244,7 @@ const LandingPage = () => {
         animate={isInViewHero ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
         transition={{ duration: 0.8 }}
         style={{
-          backgroundImage: `url(${group8Image})`,
+          backgroundImage: `url('/images/Group 8.svg')`,
           backgroundSize: "",
           backgroundPosition: "right",
           backgroundRepeat: "no-repeat cover",
@@ -603,7 +600,7 @@ const LandingPage = () => {
       <section
         ref={refFooter}
         style={{
-          backgroundImage: `url(${group10Image})`,
+          backgroundImage: `url('/images/Group 10.svg')`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
@@ -627,46 +624,46 @@ const LandingPage = () => {
         {/* Footer Links */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 p-4 md:p-6 max-w-7xl w-full text-center place-items-center">
           <div className="flex flex-col items-start">
-            <h4 className="font-semibold text-lg md:text-xl lg:text-2xl">
+            <h4 className="font-semibold text-md md:text-xl lg:text-2xl">
               Products
             </h4>
-            <ul className="flex flex-col items-start mt-2 space-y-1 text-base md:text-lg lg:text-xl">
-              <li>- Features</li>
-              <li>- How it Works</li>
-              <li>- Funding Options</li>
-              <li>- App Download</li>
+            <ul className="flex flex-col items-start mt-2 space-y-1 text-sm md:text-lg lg:text-xl">
+              <li>Features</li>
+              <li>How it Works</li>
+              <li>Funding Options</li>
+              <li>App Download</li>
             </ul>
           </div>
           <div className="flex flex-col items-start">
-            <h4 className="font-semibold text-lg md:text-xl lg:text-2xl">
+            <h4 className="font-semibold text-md md:text-xl lg:text-2xl">
               Company
             </h4>
-            <ul className="flex flex-col items-start mt-2 space-y-1 text-base md:text-lg lg:text-xl">
-              <li>- About Us</li>
-              <li>- Blog</li>
-              <li>- Contact Us</li>
+            <ul className="flex flex-col items-start mt-2 space-y-1 text-sm md:text-lg lg:text-xl">
+              <li>About Us</li>
+              <li>Blog</li>
+              <li>Contact Us</li>
             </ul>
           </div>
           <div className="flex flex-col items-start">
-            <h4 className="font-semibold text-lg md:text-xl lg:text-2xl">
+            <h4 className="font-semibold text-md md:text-xl lg:text-2xl">
               Support
             </h4>
-            <ul className="flex flex-col items-start mt-2 space-y-1 text-base md:text-lg lg:text-xl">
-              <li>- FAQ</li>
-              <li>- Help Center</li>
-              <li>- Privacy Policy</li>
-              <li>- Terms of Service</li>
+            <ul className="flex flex-col items-start mt-2 space-y-1 text-sm md:text-lg lg:text-xl">
+              <li>FAQ</li>
+              <li>Help Center</li>
+              <li>Privacy Policy</li>
+              <li>Terms of Service</li>
             </ul>
           </div>
           <div className="flex flex-col items-start">
-            <h4 className="font-semibold text-lg md:text-xl lg:text-2xl">
+            <h4 className="font-semibold text-md md:text-xl lg:text-2xl">
               Social
             </h4>
-            <ul className="flex flex-col items-start mt-2 space-y-1 text-base md:text-lg lg:text-xl">
-              <li>- Twitter</li>
-              <li>- Discord</li>
-              <li>- Telegram</li>
-              <li>- LinkedIn</li>
+            <ul className="flex flex-col items-start mt-2 space-y-1 text-sm md:text-lg lg:text-xl">
+              <li>Twitter</li>
+              <li>Discord</li>
+              <li>Telegram</li>
+              <li>LinkedIn</li>
             </ul>
           </div>
         </div>
