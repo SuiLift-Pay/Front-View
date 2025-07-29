@@ -1,5 +1,4 @@
 import { useState } from "react";
-import frameImage from "/images/Frame 29631.svg";
 
 interface CardProps {
   cardNumber: string;
@@ -31,7 +30,7 @@ const Card: React.FC<CardProps> = ({ cardNumber, cardHolder, expiry, cvv }) => {
           {/* Front Side */}
           <div
             className="absolute inset-0 rounded-lg text-white bg-cover bg-center flex flex-col justify-end p-10 shadow-lg [backface-visibility:hidden]"
-            style={{ backgroundImage: `url(${frameImage})` }}
+            style={{ backgroundImage: `url(/images/Frame 29631.svg)` }}
           >
             <p className="text-lg tracking-wides font-mono absolute left-[55%] transform -translate-y-29">
               {shortenAddress(cardHolder)}
