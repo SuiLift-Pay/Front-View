@@ -21,6 +21,24 @@ import InstantNftSaleModal from "./InstantNftSaleModal";
 
 // const ENCRYPTION_SECRET = import.meta.env.VITE_ENCRYPTION_SECRET as string;
 
+// TypeScript interfaces
+interface TransactionData {
+  digest: string;
+  type: string;
+  status: string;
+  gasUsed?: {
+    computationCost?: string;
+  };
+  timestampMs?: number;
+}
+
+interface CoinGeckoResponse {
+  sui: {
+    usdt?: number | string;
+    usd?: number | string;
+  };
+}
+
 const ProfileView = () => {
   const name = "..";
   const currentAccount = useCurrentAccount();
@@ -28,6 +46,9 @@ const ProfileView = () => {
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const walletAddress = currentAccount?.address ?? "Not connected";
   const [suiBalance, setSuiBalance] = useState<number | null>(null);
+  const [suiPrice, setSuiPrice] = useState<number | null>(null);
+  const [priceLoading, setPriceLoading] = useState(false);
+  const [priceError, setPriceError] = useState<string | null>(null);
   const [cardExists, setCardExists] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,11 +66,77 @@ const ProfileView = () => {
   const [loading, setLoading] = useState(false);
   const [isOfframpOpen, setIsOfframpOpen] = useState(false);
   const [isInstantNftSaleOpen, setIsInstantNftSaleOpen] = useState(false);
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<TransactionData[]>([]);
 
   // Your deployed package ID
   const PACKAGE_ID =
     "0x729672976c11e65bec2a0dc10b45d6cca6df9c3c78827622ff338e10742b7284";
+
+  // Fetch SUI price from CoinGecko
+  const fetchSuiPrice = async () => {
+    setPriceLoading(true);
+    setPriceError(null);
+    try {
+      // Try the primary endpoint
+      const response = await fetch(
+        "https://api.coingecko.com/api/v3/simple/price?ids=sui&vs_currencies=usdt",
+        {
+          headers: {
+            'Accept': 'application/json',
+          },
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("CoinGecko response:", data); // Debug log
+      
+      // Check if the response has the expected structure
+      if (data && data.sui && typeof data.sui.usdt === 'number') {
+        setSuiPrice(data.sui.usdt);
+      } else if (data && data.sui && typeof data.sui.usdt === 'string') {
+        // Handle string format
+        setSuiPrice(parseFloat(data.sui.usdt));
+      } else {
+        console.error("Unexpected CoinGecko response format:", data);
+        throw new Error("Invalid response format from CoinGecko");
+      }
+    } catch (error) {
+      console.error("Error fetching SUI price:", error);
+      
+      // Try fallback endpoint if primary fails
+      try {
+        const fallbackResponse = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=sui&vs_currencies=usd",
+          {
+            headers: {
+              'Accept': 'application/json',
+            },
+          }
+        );
+        
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          console.log("Fallback CoinGecko response:", fallbackData);
+          
+          if (fallbackData && fallbackData.sui && typeof fallbackData.sui.usd === 'number') {
+            setSuiPrice(fallbackData.sui.usd);
+            return; // Success with fallback
+          }
+        }
+      } catch (fallbackError) {
+        console.error("Fallback API also failed:", fallbackError);
+      }
+      
+      setPriceError("Failed to fetch price");
+      setSuiPrice(null);
+    } finally {
+      setPriceLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchBalanceAndCard = async () => {
@@ -98,8 +185,9 @@ const ProfileView = () => {
             timestamp: tx.timestampMs || undefined,
           }))
         );
-      } catch (err: any) {
-        setFeedback(`❌ Error fetching coins: ${err.message}`);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+        setFeedback(`❌ Error fetching coins: ${errorMessage}`);
       }
 
       // Fetch card details from Supabase
@@ -119,6 +207,13 @@ const ProfileView = () => {
     };
     fetchBalanceAndCard();
   }, [currentAccount, suiClient]);
+
+  // Fetch SUI price on component mount and every 30 seconds
+  useEffect(() => {
+    fetchSuiPrice();
+    const interval = setInterval(fetchSuiPrice, 30000); // Update every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   // Generate random card details
   const generateCardDetails = () => {
@@ -216,8 +311,9 @@ const ProfileView = () => {
           id: coinId,
           options: { showContent: true },
         });
+        const coinContent = coinData.data?.content as { fields?: { balance?: string } } | undefined;
         const balance =
-          Number((coinData.data?.content as any)?.fields?.balance || 0) /
+          Number(coinContent?.fields?.balance || 0) /
           1_000_000_000;
         if (balance < amountInSui) {
           throw new Error("Insufficient coin balance for transfer.");
@@ -255,7 +351,7 @@ const ProfileView = () => {
 
       await signAndExecuteTransaction(
         {
-          transaction: txb as any,
+          transaction: txb as unknown as Parameters<typeof signAndExecuteTransaction>[0]['transaction'],
           chain: "sui:testnet",
         },
         {
@@ -283,8 +379,9 @@ const ProfileView = () => {
           },
         }
       );
-    } catch (err: any) {
-      setTransferError(`Error: ${err.message}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setTransferError(`Error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -372,8 +469,22 @@ const ProfileView = () => {
                   {suiBalance?.toFixed(4) || "0.0000"} SUI
                 </p>
                 <p className="text-md text-green-400">
-                  ${suiBalance ? (suiBalance * 4.16).toFixed(2) : "0.00"}
+                  {suiBalance && suiPrice
+                    ? `$${(suiBalance * suiPrice).toFixed(2)} USDT`
+                    : priceLoading
+                    ? "Loading price..."
+                    : priceError
+                    ? "Price unavailable"
+                    : "$0.00 USDT"}
                 </p>
+                {suiPrice && (
+                  <p className="text-xs text-gray-400">
+                    1 SUI = ${suiPrice.toFixed(4)} USDT
+                  </p>
+                )}
+                {priceError && (
+                  <p className="text-xs text-red-400">{priceError}</p>
+                )}
               </div>
 
               {/* Monthly Spending */}
@@ -391,15 +502,23 @@ const ProfileView = () => {
                   SUI
                 </p>
                 <p className="text-md text-green-400">
-                  $
-                  {(
-                    transactions.reduce((total, tx) => {
+                  {(() => {
+                    const totalSpent = transactions.reduce((total, tx) => {
                       const gasCost = tx.gasUsed?.computationCost
                         ? Number(tx.gasUsed.computationCost) / 1000000000
                         : 0;
                       return total + gasCost;
-                    }, 0) * 4.16
-                  ).toFixed(2)}
+                    }, 0);
+                    return suiPrice
+                      ? `$${(totalSpent * suiPrice).toFixed(2)} USDT`
+                      : priceLoading
+                      ? "Loading price..."
+                      : priceError
+                      ? "Price unavailable"
+                      : totalSpent > 0
+                      ? "Price unavailable"
+                      : "$0.00 USDT";
+                  })()}
                 </p>
               </div>
             </div>

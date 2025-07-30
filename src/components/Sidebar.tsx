@@ -79,11 +79,11 @@ const Sidebar: React.FC<SidebarProps> = ({
             <ul className="space-y-2 flex-shrink-0">
               <li
                 className={`flex items-center p-2 rounded cursor-pointer ${
-                  selectedSection === "profile"
+                  selectedSection === "dashboard"
                     ? "bg-white text-blue-700"
                     : "hover:bg-gray-500 hover:bg-opacity-30"
                 }`}
-                onClick={() => handleSectionClick("profile")}
+                onClick={() => handleSectionClick("dashboard")}
               >
                 <FaTachometerAlt className="mr-3" />
                 <span>Dashboard</span>
