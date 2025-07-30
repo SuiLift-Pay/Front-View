@@ -81,7 +81,7 @@ const LandingPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <main className="">
+    <main className="w-full">
       <section
         ref={refNavbar}
         className=""
@@ -255,7 +255,7 @@ const LandingPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={isInViewHero ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="text-7xl font-extrabold mb-4 md:px-10 lg:px-85"
+          className="text-7xl font-extrabold mb-4 md:max-w-4xl max-w-xl"
         >
           Spend Your Crypto <span className="text-indigo-400">Anywhere</span>{" "}
           with SuiLift

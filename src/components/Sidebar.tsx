@@ -28,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     <>
       {/* Mobile Hamburger Button */}
       <button
-        className="md:hidden fixed top-4 left-4 z-40 bg-blue-700 text-white p-2 rounded-md"
+        className="md:hidden fixed top-4 left-4 z-80 bg-blue-700 text-white p-2 rounded-md"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         aria-label="Toggle sidebar menu"
       >

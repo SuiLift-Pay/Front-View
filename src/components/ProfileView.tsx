@@ -415,7 +415,7 @@ const ProfileView = () => {
   }, []);
 
   return (
-    <div className="p-6">
+    <div className="pt-20 pb-6 px-6">
       <div className="min-h-screen bg-black text-white md:px-6 lg:px-30 py-6 font-sans">
         {/* Header */}
         <Header name={name} walletAddress={walletAddress} />
