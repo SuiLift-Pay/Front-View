@@ -32,13 +32,6 @@ interface TransactionData {
   timestampMs?: number;
 }
 
-interface CoinGeckoResponse {
-  sui: {
-    usdt?: number | string;
-    usd?: number | string;
-  };
-}
-
 const ProfileView = () => {
   const name = "..";
   const currentAccount = useCurrentAccount();
@@ -82,22 +75,22 @@ const ProfileView = () => {
         "https://api.coingecko.com/api/v3/simple/price?ids=sui&vs_currencies=usdt",
         {
           headers: {
-            'Accept': 'application/json',
+            Accept: "application/json",
           },
         }
       );
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       console.log("CoinGecko response:", data); // Debug log
-      
+
       // Check if the response has the expected structure
-      if (data && data.sui && typeof data.sui.usdt === 'number') {
+      if (data && data.sui && typeof data.sui.usdt === "number") {
         setSuiPrice(data.sui.usdt);
-      } else if (data && data.sui && typeof data.sui.usdt === 'string') {
+      } else if (data && data.sui && typeof data.sui.usdt === "string") {
         // Handle string format
         setSuiPrice(parseFloat(data.sui.usdt));
       } else {
@@ -106,23 +99,27 @@ const ProfileView = () => {
       }
     } catch (error) {
       console.error("Error fetching SUI price:", error);
-      
+
       // Try fallback endpoint if primary fails
       try {
         const fallbackResponse = await fetch(
           "https://api.coingecko.com/api/v3/simple/price?ids=sui&vs_currencies=usd",
           {
             headers: {
-              'Accept': 'application/json',
+              Accept: "application/json",
             },
           }
         );
-        
+
         if (fallbackResponse.ok) {
           const fallbackData = await fallbackResponse.json();
           console.log("Fallback CoinGecko response:", fallbackData);
-          
-          if (fallbackData && fallbackData.sui && typeof fallbackData.sui.usd === 'number') {
+
+          if (
+            fallbackData &&
+            fallbackData.sui &&
+            typeof fallbackData.sui.usd === "number"
+          ) {
             setSuiPrice(fallbackData.sui.usd);
             return; // Success with fallback
           }
@@ -130,7 +127,7 @@ const ProfileView = () => {
       } catch (fallbackError) {
         console.error("Fallback API also failed:", fallbackError);
       }
-      
+
       setPriceError("Failed to fetch price");
       setSuiPrice(null);
     } finally {
@@ -186,7 +183,8 @@ const ProfileView = () => {
           }))
         );
       } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error occurred";
         setFeedback(`❌ Error fetching coins: ${errorMessage}`);
       }
 
@@ -311,10 +309,11 @@ const ProfileView = () => {
           id: coinId,
           options: { showContent: true },
         });
-        const coinContent = coinData.data?.content as { fields?: { balance?: string } } | undefined;
+        const coinContent = coinData.data?.content as
+          | { fields?: { balance?: string } }
+          | undefined;
         const balance =
-          Number(coinContent?.fields?.balance || 0) /
-          1_000_000_000;
+          Number(coinContent?.fields?.balance || 0) / 1_000_000_000;
         if (balance < amountInSui) {
           throw new Error("Insufficient coin balance for transfer.");
         }
@@ -351,7 +350,9 @@ const ProfileView = () => {
 
       await signAndExecuteTransaction(
         {
-          transaction: txb as unknown as Parameters<typeof signAndExecuteTransaction>[0]['transaction'],
+          transaction: txb as unknown as Parameters<
+            typeof signAndExecuteTransaction
+          >[0]["transaction"],
           chain: "sui:testnet",
         },
         {
@@ -380,7 +381,8 @@ const ProfileView = () => {
         }
       );
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error occurred";
       setTransferError(`Error: ${errorMessage}`);
     } finally {
       setLoading(false);
