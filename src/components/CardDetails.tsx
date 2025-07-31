@@ -1,99 +1,3 @@
-// import { FaBolt, FaGlobe, FaShieldAlt, FaCoins } from "react-icons/fa";
-
-// import Card from "./Card";
-
-// import Header from "./Header";
-
-// const CardDetails = () => {
-//   return (
-//     <div className="p-6 md:px-6 lg:px-10">
-//       {/* Header */}
-//       <Header />
-//       {/* Profile */}
-//       <div className="bg-gray-900 rounded-xl p-6 mb-8 h-auto">
-//         {/* Card Header */}
-//         <div className="">
-//           <h3 className="text-lg font-semibold mb-2">Card</h3>
-//           <p className="text-sm text-gray-400 mb-6">
-//             Use your digital assets like cash. Instantly pay online or in-store
-//             with a secure virtual card accepted worldwide.
-//           </p>
-
-//           {/* Tab Buttons */}
-//           <div className="flex gap-2 mb-6">
-//             <button className="bg-blue-600 text-white px-4 py-2 rounded-md font-semibold text-sm">
-//               Virtual Card Details
-//             </button>
-//             <button className="bg-gray-800 text-white px-4 py-2 rounded-md font-semibold text-sm">
-//               Card Benefits
-//             </button>
-//           </div>
-
-//           {/* Card + Benefits */}
-//           <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6 ">
-//             {/* Virtual Card Preview with Custom Background */}
-//             <div className="flex flex-col gap-5">
-//               <p className="text-sm mb-2">Virtual Card</p>
-//               <Card />
-//             </div>
-
-//             {/* Benefits List */}
-//             <div className="space-y-6">
-//               <div className="flex items-start gap-4">
-//                 <FaBolt className="text-yellow-400 text-2xl mt-1" />
-//                 <div>
-//                   <h4 className="text-lg font-semibold">Instant Assess</h4>
-//                   <p className="text-sm text-gray-400">
-//                     Get immediate spending power—no waiting, no pre-conversion.
-//                     Your SUI is ready when you are.
-//                   </p>
-//                 </div>
-//               </div>
-
-//               <div className="flex items-start gap-4">
-//                 <FaGlobe className="text-blue-400 text-2xl mt-1" />
-//                 <div>
-//                   <h4 className="text-lg font-semibold">Global Acceptance</h4>
-//                   <p className="text-sm text-gray-400">
-//                     Spend your SUI anywhere Visa or Mastercard is accepted—
-//                     online, in-store, or for subscriptions.
-//                   </p>
-//                 </div>
-//               </div>
-
-//               <div className="flex items-start gap-4">
-//                 <FaShieldAlt className="text-green-400 text-2xl mt-1" />
-//                 <div>
-//                   <h4 className="text-lg font-semibold">On-Chain Security</h4>
-//                   <p className="text-sm text-gray-400">
-//                     Keep your assets safe with a non-custodial wallet—your funds
-//                     stay on-chain until the moment you spend.
-//                   </p>
-//                 </div>
-//               </div>
-
-//               <div className="flex items-start gap-4">
-//                 <FaCoins className="text-purple-400 text-2xl mt-1" />
-//                 <div>
-//                   <h4 className="text-lg font-semibold">
-//                     Spend and Safe Tokens
-//                   </h4>
-//                   <p className="text-sm text-gray-400">
-//                     Use card spend and safe tokens e.g. SUI, Walrus, Blue,
-//                     Memefi, Dee.
-//                   </p>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default CardDetails;
-
 import { useEffect, useState } from "react";
 import { FaBolt, FaGlobe, FaShieldAlt, FaCoins } from "react-icons/fa";
 import Card from "./Card";
@@ -104,6 +8,7 @@ import {
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { supabase } from "../utils/supabaseClient";
 import CryptoJS from "crypto-js";
 import ATMCard from "./ATMCard";
@@ -184,92 +89,47 @@ const CardDetails = () => {
       throw new Error("Wallet not connected");
     }
 
-    const bestCoin = await findBestCoin();
-    if (!bestCoin) {
-      throw new Error("No SUI coins found in wallet");
-    }
+    console.log("Transfer details:", {
+      amount,
+      recipient,
+      useFee,
+    });
 
-    const amountInMist = Math.floor(amount * 1_000_000_000);
+    const amountInMist = BigInt(Math.floor(amount * 1_000_000_000));
     if (amountInMist <= 0) {
       throw new Error("Amount must be greater than 0.");
     }
 
-    // Fetch the latest version and digest of the coin
-    const coinObject = await suiClient.getObject({
-      id: bestCoin.coinObjectId,
-      options: {
-        showContent: true,
-        showOwner: true,
-        showPreviousTransaction: true,
-      },
-    });
-
-    if (coinObject.error) {
-      throw new Error(`Coin not found or invalid: ${coinObject.error.code}`);
-    }
-
-    const ownerAddr = coinObject.data?.owner;
-    if (
-      !ownerAddr ||
-      typeof ownerAddr !== "object" ||
-      !("AddressOwner" in ownerAddr) ||
-      ownerAddr.AddressOwner !== currentAccount.address
-    ) {
-      throw new Error("You don't own this coin.");
-    }
-
-    const version = coinObject.data?.version;
-    const digest = coinObject.data?.digest;
-
-    if (!version || !digest) {
-      throw new Error("Missing version or digest for coin.");
-    }
-
-    const txb = new Transaction();
+    const tx = new Transaction();
 
     if (useFee) {
-      // For fee transfers, split the exact amount first, then use transfer_with_fee
-      const [splitCoin] = txb.splitCoins(
-        txb.objectRef({
-          objectId: bestCoin.coinObjectId,
-          version,
-          digest,
-        }),
-        [txb.pure.u64(amountInMist)]
-      );
+      // For fee transfers, split from gas coin and use transfer_with_fee
+      const [splitCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(amountInMist)]);
 
       // Use the transfer_with_fee function on the split coin
-      txb.moveCall({
+      tx.moveCall({
         target: `${PACKAGE_ID}::transfer::transfer_with_fee`,
         typeArguments: ["0x2::sui::SUI"],
         arguments: [
           splitCoin,
-          txb.pure.u64(amountInMist),
-          txb.pure.address(recipient),
+          tx.pure.u64(amountInMist),
+          tx.pure.address(recipient),
         ],
       });
     } else {
-      // For no-fee transfers, split the exact amount and transfer it
-      const [splitCoin] = txb.splitCoins(
-        txb.objectRef({
-          objectId: bestCoin.coinObjectId,
-          version,
-          digest,
-        }),
-        [txb.pure.u64(amountInMist)]
-      );
-
-      // Transfer the split coin directly
-      txb.transferObjects([splitCoin], txb.pure.address(recipient));
+      // For no-fee transfers, split from gas coin and transfer directly
+      const [splitCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(amountInMist)]);
+      tx.transferObjects([splitCoin], tx.pure.address(recipient));
     }
 
-    // Set gas budget
-    txb.setGasBudget(5000000); // 0.005 SUI in MIST
+    // Set gas budget and sender
+    tx.setGasBudget(5_000_000); // ~= 0.005 SUI
+    tx.setSender(currentAccount.address);
 
     const result = await new Promise<any>((resolve, reject) => {
       signAndExecuteTransaction(
         {
-          transaction: txb as any,
+          transaction: tx as any,
         },
         {
           onSuccess: resolve,
@@ -379,21 +239,57 @@ const CardDetails = () => {
         return;
       }
 
-      // For withdraw, we'll use a different approach
-      // Since we can't directly sign with the card's private key in the browser for security reasons,
-      // we'll implement a server-side solution or use a different approach
-
-      // For now, we'll show a message that this requires backend implementation
-      setPinError(
-        "Withdraw functionality requires secure backend implementation. Please contact support for manual withdrawal."
+      // Create a transaction to withdraw from card wallet to connected wallet
+      const amountInMist = BigInt(
+        Math.floor(parseFloat(withdrawAmount) * 1_000_000_000)
       );
 
-      // TODO: Implement proper withdraw functionality with server-side signing
-      // This would require:
-      // 1. Send withdrawal request to backend
-      // 2. Backend signs transaction with card's private key
-      // 3. Backend executes transaction
-      // 4. Return result to frontend
+      const tx = new Transaction();
+
+      // Split the amount from the card's coin and transfer to connected wallet
+      const [splitCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(amountInMist)]);
+      tx.transferObjects(
+        [splitCoin],
+        tx.pure.address(currentAccount?.address || "")
+      );
+
+      // Set gas budget and sender
+      tx.setGasBudget(5_000_000); // ~= 0.005 SUI
+      tx.setSender(decrypted.address); // Use card wallet as sender
+
+      console.log("Withdraw transaction:", {
+        amount: withdrawAmount,
+        from: decrypted.address,
+        to: currentAccount?.address || "",
+        amountInMist: amountInMist.toString(),
+      });
+
+      // Create keypair from card's private key
+      const cardKeypair = Ed25519Keypair.fromSecretKey(decrypted.privateKey);
+
+      // Build the transaction
+      const builtTx = await tx.build({ client: suiClient as any });
+
+      // Sign with card's private key
+      const signature = await cardKeypair.signTransaction(builtTx);
+
+      // Execute the transaction
+      const result = await suiClient.executeTransactionBlock({
+        transactionBlock: builtTx,
+        signature: signature.signature,
+        options: {
+          showEffects: true,
+          showInput: true,
+        },
+      });
+
+      setFeedback(`✅ Successfully withdrew ${withdrawAmount} SUI from card!`);
+      setPinModalOpen(false);
+      setPinInput("");
+      setWithdrawAmount("");
+
+      // Refresh card wallet balance
+      await fetchCardWalletBalance(decrypted.address);
     } catch (err: any) {
       console.error("Error withdrawing from card:", err);
       setPinError(`Failed to withdraw: ${err.message}`);

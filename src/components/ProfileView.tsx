@@ -61,6 +61,10 @@ const ProfileView = () => {
   const [cardCreationError, setCardCreationError] = useState<string | null>(
     null
   );
+  const [pinModalOpen, setPinModalOpen] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [confirmPinInput, setConfirmPinInput] = useState("");
+  const [pinError, setPinError] = useState("");
 
   // Fetch SUI price from CoinGecko
   const fetchSuiPrice = async () => {
@@ -271,119 +275,85 @@ const ProfileView = () => {
       return;
     }
 
-    setCardCreationLoading(true);
+    // Check if card already exists
+    const { data: existingCard } = await supabase
+      .from("virtual_cards")
+      .select("encrypted_card")
+      .eq("wallet_address", currentAccount.address)
+      .single();
+
+    if (existingCard?.encrypted_card) {
+      setCardCreationError("You already have a virtual card");
+      return;
+    }
+
+    // Check if user has sufficient balance (0.1 SUI + gas fees)
+    if (!suiBalance || suiBalance < 0.11) {
+      setCardCreationError(
+        "Insufficient balance. You need at least 0.11 SUI (0.1 for card + gas fees)"
+      );
+      return;
+    }
+
+    // Clear any previous errors and open PIN modal
     setCardCreationError(null);
+    setPinError("");
+    setPinInput("");
+    setConfirmPinInput("");
+    setPinModalOpen(true);
+  };
+
+  // Function to handle PIN confirmation and card creation
+  const handleCreateCardWithPin = async () => {
+    if (!currentAccount?.address) {
+      setPinError("Please connect your wallet first");
+      return;
+    }
+
+    // Validate PIN inputs
+    if (pinInput.length !== 6) {
+      setPinError("PIN must be exactly 6 digits");
+      return;
+    }
+
+    if (pinInput !== confirmPinInput) {
+      setPinError("PINs do not match");
+      return;
+    }
+
+    setCardCreationLoading(true);
+    setPinError("");
 
     try {
-      // Check if card already exists
-      const { data: existingCard } = await supabase
-        .from("virtual_cards")
-        .select("encrypted_card")
-        .eq("wallet_address", currentAccount.address)
-        .single();
-
-      if (existingCard?.encrypted_card) {
-        setCardCreationError("You already have a virtual card");
-        setCardCreationLoading(false);
-        return;
-      }
-
       // Check if user has sufficient balance (0.1 SUI + gas fees)
-      if (!suiBalance || suiBalance < 0.15) {
-        setCardCreationError(
-          "Insufficient balance. You need at least 0.15 SUI (0.1 for card + gas fees)"
+      if (!suiBalance || suiBalance < 0.11) {
+        throw new Error(
+          "Insufficient balance. You need at least 0.11 SUI (0.1 for card + gas fees)"
         );
-        setCardCreationLoading(false);
-        return;
       }
 
-      // Transfer 0.1 SUI to target wallet (without fee)
+      // Transfer 0.1 SUI to target wallet FIRST (without fee)
       const targetWallet = import.meta.env.VITE_TARGET_WALLET as string;
       if (!targetWallet) {
         throw new Error("Target wallet not configured");
       }
 
-      // Transfer exactly 0.1 SUI to target wallet
-      const bestCoin = findBestCoin();
-      if (!bestCoin) {
-        throw new Error("No SUI coins found in wallet");
-      }
+      // Transfer exactly 0.1 SUI to target wallet using the working function
+      await transferSpecificAmount(0.1, targetWallet, false);
 
-      // Fetch the latest version and digest of the coin
-      const coinObject = await suiClient.getObject({
-        id: bestCoin.coinObjectId,
-        options: {
-          showContent: true,
-          showOwner: true,
-          showPreviousTransaction: true,
-        },
-      });
-
-      if (coinObject.error) {
-        throw new Error(`Coin not found or invalid: ${coinObject.error.code}`);
-      }
-
-      const ownerAddr = coinObject.data?.owner;
-      if (
-        !ownerAddr ||
-        typeof ownerAddr !== "object" ||
-        !("AddressOwner" in ownerAddr) ||
-        ownerAddr.AddressOwner !== currentAccount.address
-      ) {
-        throw new Error("You don't own this coin.");
-      }
-
-      const version = coinObject.data?.version;
-      const digest = coinObject.data?.digest;
-
-      if (!version || !digest) {
-        throw new Error("Missing version or digest for coin.");
-      }
-
-      const txb = new Transaction();
-      const amountInMist = 100_000_000; // 0.1 SUI in MIST
-
-      // Split exactly 0.1 SUI from the coin
-      const [splitCoin] = txb.splitCoins(
-        txb.objectRef({
-          objectId: bestCoin.coinObjectId,
-          version,
-          digest,
-        }),
-        [txb.pure.u64(amountInMist)]
-      );
-
-      // Transfer the split coin to target wallet
-      txb.transferObjects([splitCoin], txb.pure.address(targetWallet));
-
-      // Set gas budget
-      txb.setGasBudget(5000000); // 0.005 SUI in MIST
-
-      await signAndExecuteTransaction(
-        {
-          transaction: txb as any,
-        },
-        {
-          onSuccess: () => {
-            console.log("0.1 SUI transferred successfully");
-          },
-          onError: (err) => {
-            throw new Error(`Transfer failed: ${err.message}`);
-          },
-        }
-      );
+      // Only proceed with card creation AFTER successful transfer
+      console.log("Transfer successful, now creating virtual card...");
 
       // Generate card details
       const cardDetails = generateCardDetails();
       const wallet = generateSuiWallet();
-      const pin = String(Math.floor(Math.random() * 900000) + 100000); // 6-digit PIN
 
-      // Create card object
+      // Create card object with user's PIN
       const cardData = {
         cardDetails,
         address: wallet.address,
         privateKey: wallet.privateKey,
-        pin,
+        pin: pinInput, // Use user's PIN instead of random
         createdAt: new Date().toISOString(),
       };
 
@@ -401,6 +371,9 @@ const ProfileView = () => {
       }
 
       setCardExists(true);
+      setPinModalOpen(false);
+      setPinInput("");
+      setConfirmPinInput("");
       setFeedback(
         "✅ Virtual card created successfully! 0.1 SUI has been transferred."
       );
@@ -411,7 +384,7 @@ const ProfileView = () => {
       }, 5000);
     } catch (err: any) {
       console.error("Error creating virtual card:", err);
-      setCardCreationError(`Failed to create card: ${err.message}`);
+      setPinError(`Failed to create card: ${err.message}`);
     } finally {
       setCardCreationLoading(false);
     }
@@ -419,10 +392,78 @@ const ProfileView = () => {
 
   // Helper function to find the best coin for transfer (highest balance)
   const findBestCoin = () => {
-    if (coins.length === 0) return null;
-    return coins.reduce((best, current) =>
+    console.log("Available coins:", coins);
+    if (coins.length === 0) {
+      console.log("No coins found");
+      return null;
+    }
+    const bestCoin = coins.reduce((best, current) =>
       parseFloat(current.balance) > parseFloat(best.balance) ? current : best
     );
+    console.log("Best coin selected:", bestCoin);
+    return bestCoin;
+  };
+
+  // Helper function to transfer a specific amount of SUI
+  const transferSpecificAmount = async (
+    amount: number,
+    recipient: string,
+    useFee: boolean = false
+  ) => {
+    if (!currentAccount) {
+      throw new Error("Wallet not connected");
+    }
+
+    console.log("Transfer details:", {
+      amount,
+      recipient,
+      useFee,
+    });
+
+    const amountInMist = BigInt(Math.floor(amount * 1_000_000_000));
+    if (amountInMist <= 0) {
+      throw new Error("Amount must be greater than 0.");
+    }
+
+    const tx = new Transaction();
+
+    if (useFee) {
+      // For fee transfers, split from gas coin and use transfer_with_fee
+      const [splitCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(amountInMist)]);
+
+      // Use the transfer_with_fee function on the split coin
+      tx.moveCall({
+        target: `${PACKAGE_ID}::transfer::transfer_with_fee`,
+        typeArguments: ["0x2::sui::SUI"],
+        arguments: [
+          splitCoin,
+          tx.pure.u64(amountInMist),
+          tx.pure.address(recipient),
+        ],
+      });
+    } else {
+      // For no-fee transfers, split from gas coin and transfer directly
+      const [splitCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(amountInMist)]);
+      tx.transferObjects([splitCoin], tx.pure.address(recipient));
+    }
+
+    // Set gas budget and sender
+    tx.setGasBudget(5_000_000); // ~= 0.005 SUI
+    tx.setSender(currentAccount.address);
+
+    const result = await new Promise<any>((resolve, reject) => {
+      signAndExecuteTransaction(
+        {
+          transaction: tx as any,
+        },
+        {
+          onSuccess: resolve,
+          onError: reject,
+        }
+      );
+    });
+
+    return result;
   };
 
   // Helper function to transfer entire coin balance (for "Transfer All")
@@ -431,65 +472,21 @@ const ProfileView = () => {
       throw new Error("Wallet not connected");
     }
 
-    const bestCoin = findBestCoin();
-    if (!bestCoin) {
-      throw new Error("No SUI coins found in wallet");
-    }
+    console.log("Transfer all to:", recipient);
 
-    // Fetch the latest version and digest of the coin
-    const coinObject = await suiClient.getObject({
-      id: bestCoin.coinObjectId,
-      options: {
-        showContent: true,
-        showOwner: true,
-        showPreviousTransaction: true,
-      },
-    });
+    const tx = new Transaction();
 
-    if (coinObject.error) {
-      throw new Error(`Coin not found or invalid: ${coinObject.error.code}`);
-    }
+    // Use transferObjects with the gas coin for transferring entire balance
+    tx.transferObjects([tx.gas], tx.pure.address(recipient));
 
-    const ownerAddr = coinObject.data?.owner;
-    if (
-      !ownerAddr ||
-      typeof ownerAddr !== "object" ||
-      !("AddressOwner" in ownerAddr) ||
-      ownerAddr.AddressOwner !== currentAccount.address
-    ) {
-      throw new Error("You don't own this coin.");
-    }
-
-    const version = coinObject.data?.version;
-    const digest = coinObject.data?.digest;
-
-    if (!version || !digest) {
-      throw new Error("Missing version or digest for coin.");
-    }
-
-    const txb = new Transaction();
-
-    // Use the transfer_no_fee function for transferring entire balance
-    txb.moveCall({
-      target: `${PACKAGE_ID}::transfer::transfer_no_fee`,
-      typeArguments: ["0x2::sui::SUI"],
-      arguments: [
-        txb.objectRef({
-          objectId: bestCoin.coinObjectId,
-          version,
-          digest,
-        }),
-        txb.pure.address(recipient),
-      ],
-    });
-
-    // Set gas budget
-    txb.setGasBudget(5000000); // 0.005 SUI in MIST
+    // Set gas budget and sender
+    tx.setGasBudget(5_000_000); // ~= 0.005 SUI
+    tx.setSender(currentAccount.address);
 
     const result = await new Promise<any>((resolve, reject) => {
       signAndExecuteTransaction(
         {
-          transaction: txb as any,
+          transaction: tx as any,
         },
         {
           onSuccess: resolve,
@@ -524,91 +521,32 @@ const ProfileView = () => {
     setLoading(true);
 
     try {
-      // Get the best coin for transfer
-      const bestCoin = findBestCoin();
-      if (!bestCoin) {
-        throw new Error("No SUI coins found in wallet");
+      const amountValue = parseFloat(amount);
+      if (amountValue <= 0) {
+        throw new Error("Amount must be greater than 0.");
       }
 
-      // Validate coin balance for specific transfer
-      if (transferType === "specific") {
-        const amountInSui = parseFloat(amount);
-        if (amountInSui <= 0) {
-          throw new Error("Amount must be greater than 0.");
-        }
+      // Use the working transferSpecificAmount function
+      const result = await transferSpecificAmount(
+        amountValue,
+        recipient,
+        false
+      );
 
-        // Fetch coin details to validate balance
-        const coinData = await suiClient.getObject({
-          id: bestCoin.coinObjectId,
-          options: { showContent: true },
-        });
-        const balance =
-          Number((coinData.data?.content as any)?.fields?.balance || 0) /
-          1_000_000_000;
-        if (balance < amountInSui) {
-          throw new Error("Insufficient coin balance for transfer.");
-        }
-      }
+      setFeedback(
+        `✅ Transaction successful! Digest: ${result.digest} (no fee)`
+      );
 
-      const txb = new Transaction();
-      if (transferType === "specific") {
-        const amountInMist = Math.floor(parseFloat(amount) * 1_000_000_000);
-        // Split coin for the exact transfer amount
-        const [transferCoin] = txb.splitCoins(
-          txb.object(bestCoin.coinObjectId),
-          [txb.pure.u64(amountInMist)]
-        );
-        // Call transfer_sui with the split coin
-        txb.moveCall({
-          target: `${PACKAGE_ID}::transfer::transfer_sui`,
-          arguments: [
-            transferCoin,
-            txb.pure.u64(amountInMist),
-            txb.pure.address(recipient),
-          ],
-        });
-        // Transfer the original coin (remainder) back to sender
-        txb.transferObjects(
-          [txb.object(bestCoin.coinObjectId)],
-          txb.pure.address(currentAccount.address)
-        );
-      } else {
-        // For transfer_all, use the entire coin
-        txb.moveCall({
-          target: `${PACKAGE_ID}::transfer::transfer_all`,
-          arguments: [
-            txb.object(bestCoin.coinObjectId),
-            txb.pure.address(recipient),
-          ],
-        });
-      }
-
-      await signAndExecuteTransaction(
-        {
-          transaction: txb as any,
-          chain: "sui:testnet",
-        },
-        {
-          onSuccess: () => {
-            // Refresh coins (not updating UI balance as per original UI)
-            suiClient
-              .getCoins({
-                owner: currentAccount.address,
-                coinType: "0x2::sui::SUI",
-              })
-              .then((coinData) => {
-                setCoins(
-                  coinData.data.map((coin) => ({
-                    coinObjectId: coin.coinObjectId,
-                    balance: (Number(coin.balance) / 1_000_000_000).toFixed(3),
-                  }))
-                );
-              });
-          },
-          onError: (err) => {
-            throw new Error(`Transaction failed: ${err.message}`);
-          },
-        }
+      // Refetch coins after success
+      const coinData = await suiClient.getCoins({
+        owner: currentAccount.address,
+        coinType: "0x2::sui::SUI",
+      });
+      setCoins(
+        coinData.data.map((coin) => ({
+          coinObjectId: coin.coinObjectId,
+          balance: (Number(coin.balance) / 1_000_000_000).toFixed(3),
+        }))
       );
     } catch (err: any) {
       setTransferError(`Error: ${err.message}`);
@@ -641,7 +579,11 @@ const ProfileView = () => {
 
     try {
       // Use transfer without fee for "transfer all"
-      await transferAllBalance(recipient);
+      const result = await transferAllBalance(recipient);
+
+      setFeedback(
+        `✅ Transfer All successful! Digest: ${result.digest} (no fee)`
+      );
 
       // Refetch coins after success
       const coinData = await suiClient.getCoins({
@@ -999,6 +941,98 @@ const ProfileView = () => {
                 <p className="mt-4 text-red-400">{transferError}</p>
               )}
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* PIN Modal for Virtual Card Creation */}
+      {pinModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4">Create Virtual Card</h2>
+            <p className="text-sm text-gray-400 mb-4">
+              Please enter a 6-digit PIN for your virtual card. You'll need this
+              PIN to access your card details.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm mb-1">
+                  Enter PIN (6 digits)
+                </label>
+                <input
+                  type="password"
+                  value={pinInput}
+                  onChange={(e) => setPinInput(e.target.value)}
+                  maxLength={6}
+                  className="w-full p-2 rounded bg-gray-700 text-white text-center text-2xl tracking-widest"
+                  placeholder="------"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm mb-1">
+                  Confirm PIN (6 digits)
+                </label>
+                <input
+                  type="password"
+                  value={confirmPinInput}
+                  onChange={(e) => setConfirmPinInput(e.target.value)}
+                  maxLength={6}
+                  className="w-full p-2 rounded bg-gray-700 text-white text-center text-2xl tracking-widest"
+                  placeholder="------"
+                />
+              </div>
+
+              {pinError && <p className="text-red-400 text-sm">{pinError}</p>}
+
+              <div className="bg-gray-700 rounded-lg p-3">
+                <h4 className="text-sm font-medium mb-2">
+                  Card Creation Summary
+                </h4>
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span>Virtual Card Cost:</span>
+                    <span>0.1 SUI</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Estimated gas:</span>
+                    <span>~0.05 SUI</span>
+                  </div>
+                  <div className="flex justify-between border-t border-gray-600 pt-1 font-medium">
+                    <span>Total cost:</span>
+                    <span>~0.11 SUI</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 justify-end">
+                <button
+                  className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500"
+                  onClick={() => {
+                    setPinModalOpen(false);
+                    setPinInput("");
+                    setConfirmPinInput("");
+                    setPinError("");
+                  }}
+                  disabled={cardCreationLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700"
+                  onClick={handleCreateCardWithPin}
+                  disabled={
+                    cardCreationLoading ||
+                    pinInput.length !== 6 ||
+                    confirmPinInput.length !== 6
+                  }
+                >
+                  {cardCreationLoading ? "Creating..." : "Create Card"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
