@@ -22,7 +22,7 @@ import OfframpModal from "./OfframpModal";
 import InstantNftSaleModal from "./InstantNftSaleModal";
 import Card from "./Card"; // Added Card component import
 
-const ENCRYPTION_SECRET = import.meta.env.VITE_ENCRYPTION_SECRET as string;
+// const ENCRYPTION_SECRET = import.meta.env.VITE_ENCRYPTION_SECRET as string;
 
 const ProfileView = () => {
   const name = "..";
@@ -31,6 +31,9 @@ const ProfileView = () => {
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const walletAddress = currentAccount?.address ?? "Not connected";
   const [suiBalance, setSuiBalance] = useState<number | null>(null);
+  const [suiPrice, setSuiPrice] = useState<number | null>(null);
+  const [priceLoading, setPriceLoading] = useState(false);
+  const [priceError, setPriceError] = useState<string | null>(null);
   const [cardExists, setCardExists] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,21 +54,6 @@ const ProfileView = () => {
   const [isOfframpOpen, setIsOfframpOpen] = useState(false);
   const [isInstantNftSaleOpen, setIsInstantNftSaleOpen] = useState(false);
   const [transactions, setTransactions] = useState<any[]>([]);
-
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const [pinModalOpen, setPinModalOpen] = useState(false);
-  const [pinInput, setPinInput] = useState("");
-  const [pinError, setPinError] = useState("");
-  const [pendingCardAction, setPendingCardAction] = useState<
-    "create" | "reveal" | "fund" | "withdraw" | null
-  >(null);
-  const [decryptedCard, setDecryptedCard] = useState<any>(null);
-  const [revealModalOpen, setRevealModalOpen] = useState(false);
-  const [cardWalletBalance, setCardWalletBalance] = useState<number>(0);
-  const [fundAmount, setFundAmount] = useState("");
-  const [withdrawAmount, setWithdrawAmount] = useState("");
 
   // Your deployed package ID
   const PACKAGE_ID =
@@ -90,6 +78,76 @@ const ProfileView = () => {
     } catch (err: any) {
       console.error("Error fetching card wallet balance:", err);
       setCardWalletBalance(0);
+    }
+  };
+
+  // Fetch SUI price from CoinGecko
+  const fetchSuiPrice = async () => {
+    setPriceLoading(true);
+    setPriceError(null);
+    try {
+      // Try the primary endpoint
+      const response = await fetch(
+        "https://api.coingecko.com/api/v3/simple/price?ids=sui&vs_currencies=usdt",
+        {
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("CoinGecko response:", data); // Debug log
+
+      // Check if the response has the expected structure
+      if (data && data.sui && typeof data.sui.usdt === "number") {
+        setSuiPrice(data.sui.usdt);
+      } else if (data && data.sui && typeof data.sui.usdt === "string") {
+        // Handle string format
+        setSuiPrice(parseFloat(data.sui.usdt));
+      } else {
+        console.error("Unexpected CoinGecko response format:", data);
+        throw new Error("Invalid response format from CoinGecko");
+      }
+    } catch (error) {
+      console.error("Error fetching SUI price:", error);
+
+      // Try fallback endpoint if primary fails
+      try {
+        const fallbackResponse = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=sui&vs_currencies=usd",
+          {
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          console.log("Fallback CoinGecko response:", fallbackData);
+
+          if (
+            fallbackData &&
+            fallbackData.sui &&
+            typeof fallbackData.sui.usd === "number"
+          ) {
+            setSuiPrice(fallbackData.sui.usd);
+            return; // Success with fallback
+          }
+        }
+      } catch (fallbackError) {
+        console.error("Fallback API also failed:", fallbackError);
+      }
+
+      setPriceError("Failed to fetch price");
+      setSuiPrice(null);
+    } finally {
+      setPriceLoading(false);
     }
   };
 
@@ -140,8 +198,10 @@ const ProfileView = () => {
             timestamp: tx.timestampMs || undefined,
           }))
         );
-      } catch (err: any) {
-        setFeedback(`❌ Error fetching coins: ${err.message}`);
+      } catch (err: unknown) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error occurred";
+        setFeedback(`❌ Error fetching coins: ${errorMessage}`);
       }
 
       // Fetch card details from Supabase
@@ -183,6 +243,13 @@ const ProfileView = () => {
     };
     fetchBalanceAndCard();
   }, [currentAccount, suiClient]);
+
+  // Fetch SUI price on component mount and every 30 seconds
+  useEffect(() => {
+    fetchSuiPrice();
+    const interval = setInterval(fetchSuiPrice, 30000); // Update every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   // Generate random card details
   const generateCardDetails = () => {
@@ -718,87 +785,86 @@ const ProfileView = () => {
     setLoading(true);
 
     try {
-      const amountValue = parseFloat(amount);
-      if (amountValue <= 0) {
-        throw new Error("Amount must be greater than 0.");
+      // Validate coin balance for specific transfer
+      if (transferType === "specific") {
+        const amountInSui = parseFloat(amount);
+        if (amountInSui <= 0) {
+          throw new Error("Amount must be greater than 0.");
+        }
+        // Fetch coin details to validate balance
+        const coinData = await suiClient.getObject({
+          id: coinId,
+          options: { showContent: true },
+        });
+        const balance =
+          Number((coinData.data?.content as any)?.fields?.balance || 0) /
+          1_000_000_000;
+        if (balance < amountInSui) {
+          throw new Error("Insufficient coin balance for transfer.");
+        }
       }
 
-      // Always use transferSpecificAmount with useFee = false
-      const result = await transferSpecificAmount(
-        amountValue,
-        recipient,
-        false
-      );
+      const txb = new Transaction();
+      if (transferType === "specific") {
+        const amountInMist = Math.floor(parseFloat(amount) * 1_000_000_000);
+        // Split coin for the exact transfer amount
+        const [transferCoin] = txb.splitCoins(txb.object(coinId), [
+          txb.pure.u64(amountInMist),
+        ]);
+        // Call transfer_sui with the split coin
+        txb.moveCall({
+          target: `${PACKAGE_ID}::transfer::transfer_sui`,
+          arguments: [
+            transferCoin,
+            txb.pure.u64(amountInMist),
+            txb.pure.address(recipient),
+          ],
+        });
+        // Transfer the original coin (remainder) back to sender
+        txb.transferObjects(
+          [txb.object(coinId)],
+          txb.pure.address(currentAccount.address)
+        );
+      } else {
+        // For transfer_all, use the entire coin
+        txb.moveCall({
+          target: `${PACKAGE_ID}::transfer::transfer_all`,
+          arguments: [txb.object(coinId), txb.pure.address(recipient)],
+        });
+      }
 
-      const feeMessage = " (no fee)";
-      setTransferStatus(
-        `Transaction successful! Digest: ${result.digest}${feeMessage}`
-      );
-
-      // Refetch coins after success
-      const coinData = await suiClient.getCoins({
-        owner: currentAccount!.address,
-        coinType: "0x2::sui::SUI",
-      });
-      setCoins(
-        coinData.data.map((coin) => ({
-          coinObjectId: coin.coinObjectId,
-          balance: (Number(coin.balance) / 1_000_000_000).toFixed(3),
-        }))
-      );
-    } catch (err: any) {
-      console.error("Transaction failed:", err);
-      setTransferError(`Error: ${err.message || String(err)}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /* ---------- transfer_all without fee ---------- */
-  const handleTransferAll = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentAccount) {
-      setTransferError("Please connect your wallet first.");
-      return;
-    }
-    if (!recipient) {
-      setTransferError("Please enter recipient address.");
-      return;
-    }
-
-    if (!/^0x[0-9a-fA-F]{64}$/.test(recipient)) {
-      setTransferError(
-        "Invalid recipient address. Must be 64 hex characters after 0x."
-      );
-      return;
-    }
-
-    setTransferStatus("");
-    setTransferError("");
-    setLoading(true);
-
-    try {
-      // Use transfer without fee for "transfer all"
-      const result = await transferAllBalance(recipient);
-
-      setTransferStatus(
-        `Transfer All successful! Digest: ${result.digest} (no fee)`
-      );
-
-      // Refetch coins after success
-      const coinData = await suiClient.getCoins({
-        owner: currentAccount.address,
-        coinType: "0x2::sui::SUI",
-      });
-      setCoins(
-        coinData.data.map((coin: any) => ({
-          coinObjectId: coin.coinObjectId,
-          balance: (Number(coin.balance) / 1_000_000_000).toFixed(3),
-        }))
+      await signAndExecuteTransaction(
+        {
+          transaction: txb as any,
+          chain: "sui:testnet",
+        },
+        {
+          onSuccess: (result) => {
+            setTransferStatus(
+              `Transaction successful! Digest: ${result.digest}`
+            );
+            // Refresh coins (not updating UI balance as per original UI)
+            suiClient
+              .getCoins({
+                owner: currentAccount.address,
+                coinType: "0x2::sui::SUI",
+              })
+              .then((coinData) => {
+                setCoins(
+                  coinData.data.map((coin) => ({
+                    coinObjectId: coin.coinObjectId,
+                    balance: (Number(coin.balance) / 1_000_000_000).toFixed(3),
+                  }))
+                );
+              });
+          },
+          onError: (err) => {
+            throw new Error(`Transaction failed: ${err.message}`);
+          },
+        }
       );
     } catch (err: any) {
-      console.error("Transfer All failed:", err);
-      setTransferError(`Error: ${err.message || String(err)}`);
+      setTransferError(`Error: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -830,7 +896,7 @@ const ProfileView = () => {
   }, []);
 
   return (
-    <div className="p-6">
+    <div className="pt-20 pb-6 px-6">
       <div className="min-h-screen bg-black text-white md:px-6 lg:px-30 py-6 font-sans">
         {/* Header */}
         <Header name={name} walletAddress={walletAddress} />
@@ -887,8 +953,22 @@ const ProfileView = () => {
                   {suiBalance?.toFixed(4) || "0.0000"} SUI
                 </p>
                 <p className="text-md text-green-400">
-                  ${suiBalance ? (suiBalance * 4.16).toFixed(2) : "0.00"}
+                  {suiBalance && suiPrice
+                    ? `$${(suiBalance * suiPrice).toFixed(2)} USDT`
+                    : priceLoading
+                    ? "Loading price..."
+                    : priceError
+                    ? "Price unavailable"
+                    : "$0.00 USDT"}
                 </p>
+                {suiPrice && (
+                  <p className="text-xs text-gray-400">
+                    1 SUI = ${suiPrice.toFixed(4)} USDT
+                  </p>
+                )}
+                {priceError && (
+                  <p className="text-xs text-red-400">{priceError}</p>
+                )}
               </div>
 
               {/* Monthly Spending */}
@@ -906,15 +986,23 @@ const ProfileView = () => {
                   SUI
                 </p>
                 <p className="text-md text-green-400">
-                  $
-                  {(
-                    transactions.reduce((total, tx) => {
+                  {(() => {
+                    const totalSpent = transactions.reduce((total, tx) => {
                       const gasCost = tx.gasUsed?.computationCost
                         ? Number(tx.gasUsed.computationCost) / 1000000000
                         : 0;
                       return total + gasCost;
-                    }, 0) * 4.16
-                  ).toFixed(2)}
+                    }, 0);
+                    return suiPrice
+                      ? `$${(totalSpent * suiPrice).toFixed(2)} USDT`
+                      : priceLoading
+                      ? "Loading price..."
+                      : priceError
+                      ? "Price unavailable"
+                      : totalSpent > 0
+                      ? "Price unavailable"
+                      : "$0.00 USDT";
+                  })()}
                 </p>
               </div>
             </div>

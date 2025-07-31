@@ -81,7 +81,7 @@ const LandingPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <main className="">
+    <main className="w-full">
       <section
         ref={refNavbar}
         className=""
@@ -255,7 +255,7 @@ const LandingPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={isInViewHero ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="text-7xl font-extrabold mb-4 md:px-10 lg:px-105"
+          className="text-7xl font-extrabold mb-4 md:max-w-4xl max-w-xl"
         >
           Spend Your Crypto <span className="text-indigo-400">Anywhere</span>{" "}
           with SuiLift
@@ -627,7 +627,7 @@ const LandingPage = () => {
             <h4 className="font-semibold text-md md:text-xl lg:text-2xl">
               Products
             </h4>
-            <ul className="flex flex-col items-start mt-2 space-y-1 text-sm md:text-lg lg:text-xl">
+            <ul className="flex flex-col items-start mt-2 space-y-1 text-sm md:text-lg lg:text-lg">
               <li>Features</li>
               <li>How it Works</li>
               <li>Funding Options</li>
@@ -638,7 +638,7 @@ const LandingPage = () => {
             <h4 className="font-semibold text-md md:text-xl lg:text-2xl">
               Company
             </h4>
-            <ul className="flex flex-col items-start mt-2 space-y-1 text-sm md:text-lg lg:text-xl">
+            <ul className="flex flex-col items-start mt-2 space-y-1 text-sm md:text-lg lg:text-lg">
               <li>About Us</li>
               <li>Blog</li>
               <li>Contact Us</li>
@@ -648,7 +648,7 @@ const LandingPage = () => {
             <h4 className="font-semibold text-md md:text-xl lg:text-2xl">
               Support
             </h4>
-            <ul className="flex flex-col items-start mt-2 space-y-1 text-sm md:text-lg lg:text-xl">
+            <ul className="flex flex-col items-start mt-2 space-y-1 text-sm md:text-lg lg:text-lg">
               <li>FAQ</li>
               <li>Help Center</li>
               <li>Privacy Policy</li>
@@ -659,7 +659,7 @@ const LandingPage = () => {
             <h4 className="font-semibold text-md md:text-xl lg:text-2xl">
               Social
             </h4>
-            <ul className="flex flex-col items-start mt-2 space-y-1 text-sm md:text-lg lg:text-xl">
+            <ul className="flex flex-col items-start mt-2 space-y-1 text-sm md:text-lg lg:text-lg">
               <li>Twitter</li>
               <li>Discord</li>
               <li>Telegram</li>

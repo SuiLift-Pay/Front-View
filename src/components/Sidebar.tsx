@@ -28,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     <>
       {/* Mobile Hamburger Button */}
       <button
-        className="md:hidden fixed top-4 left-4 z-40 bg-blue-700 text-white p-2 rounded-md"
+        className="md:hidden fixed top-4 left-4 z-80 bg-blue-700 text-white p-2 rounded-md"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         aria-label="Toggle sidebar menu"
       >
@@ -79,11 +79,11 @@ const Sidebar: React.FC<SidebarProps> = ({
             <ul className="space-y-2 flex-shrink-0">
               <li
                 className={`flex items-center p-2 rounded cursor-pointer ${
-                  selectedSection === "profile"
+                  selectedSection === "dashboard"
                     ? "bg-white text-blue-700"
                     : "hover:bg-gray-500 hover:bg-opacity-30"
                 }`}
-                onClick={() => handleSectionClick("profile")}
+                onClick={() => handleSectionClick("dashboard")}
               >
                 <FaTachometerAlt className="mr-3" />
                 <span>Dashboard</span>
