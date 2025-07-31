@@ -13,12 +13,16 @@ import {
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+import { supabase } from "../utils/supabaseClient";
+import CryptoJS from "crypto-js";
 
 import Header from "./Header";
 import OfframpModal from "./OfframpModal";
 import InstantNftSaleModal from "./InstantNftSaleModal";
 
 const PACKAGE_ID = import.meta.env.VITE_PACKAGE_ID as string;
+const ENCRYPTION_SECRET = import.meta.env.VITE_ENCRYPTION_SECRET as string;
 
 const ProfileView = () => {
   const name = "..";
@@ -50,6 +54,13 @@ const ProfileView = () => {
   const [isOfframpOpen, setIsOfframpOpen] = useState(false);
   const [isInstantNftSaleOpen, setIsInstantNftSaleOpen] = useState(false);
   const [transactions, setTransactions] = useState<any[]>([]);
+
+  // Card-related state variables
+  const [cardExists, setCardExists] = useState(false);
+  const [cardCreationLoading, setCardCreationLoading] = useState(false);
+  const [cardCreationError, setCardCreationError] = useState<string | null>(
+    null
+  );
 
   // Fetch SUI price from CoinGecko
   const fetchSuiPrice = async () => {
@@ -121,6 +132,30 @@ const ProfileView = () => {
     }
   };
 
+  // Check if card exists on component mount
+  useEffect(() => {
+    const checkCardExists = async () => {
+      if (!currentAccount?.address) {
+        setCardExists(false);
+        return;
+      }
+
+      try {
+        const { data } = await supabase
+          .from("virtual_cards")
+          .select("encrypted_card")
+          .eq("wallet_address", currentAccount.address)
+          .single();
+
+        setCardExists(!!data?.encrypted_card);
+      } catch (err) {
+        setCardExists(false);
+      }
+    };
+
+    checkCardExists();
+  }, [currentAccount?.address]);
+
   useEffect(() => {
     const fetchBalanceAndCard = async () => {
       if (!currentAccount?.address) {
@@ -183,6 +218,204 @@ const ProfileView = () => {
     const interval = setInterval(fetchSuiPrice, 30000); // Update every 30 seconds
     return () => clearInterval(interval);
   }, []);
+
+  // Helper function to generate card details
+  const generateCardDetails = () => {
+    const cardNumber = Array.from({ length: 4 }, () =>
+      Math.floor(Math.random() * 10000)
+        .toString()
+        .padStart(4, "0")
+    ).join(" ");
+
+    const expiryMonth = String(Math.floor(Math.random() * 12) + 1).padStart(
+      2,
+      "0"
+    );
+    const expiryYear = String(
+      new Date().getFullYear() + Math.floor(Math.random() * 5) + 1
+    );
+    const expiry = `${expiryMonth}/${expiryYear.slice(-2)}`;
+
+    const cvv = String(Math.floor(Math.random() * 1000)).padStart(3, "0");
+    const cardHolder = "CARD HOLDER";
+
+    return {
+      cardNumber,
+      expiry,
+      cvv,
+      cardHolder,
+    };
+  };
+
+  // Helper function to encrypt card details
+  const encryptCardDetails = (cardData: any) => {
+    return CryptoJS.AES.encrypt(
+      JSON.stringify(cardData),
+      ENCRYPTION_SECRET
+    ).toString();
+  };
+
+  // Helper function to generate Sui wallet
+  const generateSuiWallet = () => {
+    const keypair = new Ed25519Keypair();
+    return {
+      address: keypair.getPublicKey().toSuiAddress(),
+      privateKey: "generated_private_key", // For demo purposes
+    };
+  };
+
+  // Function to handle virtual card creation
+  const handleGetVirtualCard = async () => {
+    if (!currentAccount?.address) {
+      setCardCreationError("Please connect your wallet first");
+      return;
+    }
+
+    setCardCreationLoading(true);
+    setCardCreationError(null);
+
+    try {
+      // Check if card already exists
+      const { data: existingCard } = await supabase
+        .from("virtual_cards")
+        .select("encrypted_card")
+        .eq("wallet_address", currentAccount.address)
+        .single();
+
+      if (existingCard?.encrypted_card) {
+        setCardCreationError("You already have a virtual card");
+        setCardCreationLoading(false);
+        return;
+      }
+
+      // Check if user has sufficient balance (0.1 SUI + gas fees)
+      if (!suiBalance || suiBalance < 0.15) {
+        setCardCreationError(
+          "Insufficient balance. You need at least 0.15 SUI (0.1 for card + gas fees)"
+        );
+        setCardCreationLoading(false);
+        return;
+      }
+
+      // Transfer 0.1 SUI to target wallet (without fee)
+      const targetWallet = import.meta.env.VITE_TARGET_WALLET as string;
+      if (!targetWallet) {
+        throw new Error("Target wallet not configured");
+      }
+
+      // Transfer exactly 0.1 SUI to target wallet
+      const bestCoin = findBestCoin();
+      if (!bestCoin) {
+        throw new Error("No SUI coins found in wallet");
+      }
+
+      // Fetch the latest version and digest of the coin
+      const coinObject = await suiClient.getObject({
+        id: bestCoin.coinObjectId,
+        options: {
+          showContent: true,
+          showOwner: true,
+          showPreviousTransaction: true,
+        },
+      });
+
+      if (coinObject.error) {
+        throw new Error(`Coin not found or invalid: ${coinObject.error.code}`);
+      }
+
+      const ownerAddr = coinObject.data?.owner;
+      if (
+        !ownerAddr ||
+        typeof ownerAddr !== "object" ||
+        !("AddressOwner" in ownerAddr) ||
+        ownerAddr.AddressOwner !== currentAccount.address
+      ) {
+        throw new Error("You don't own this coin.");
+      }
+
+      const version = coinObject.data?.version;
+      const digest = coinObject.data?.digest;
+
+      if (!version || !digest) {
+        throw new Error("Missing version or digest for coin.");
+      }
+
+      const txb = new Transaction();
+      const amountInMist = 100_000_000; // 0.1 SUI in MIST
+
+      // Split exactly 0.1 SUI from the coin
+      const [splitCoin] = txb.splitCoins(
+        txb.objectRef({
+          objectId: bestCoin.coinObjectId,
+          version,
+          digest,
+        }),
+        [txb.pure.u64(amountInMist)]
+      );
+
+      // Transfer the split coin to target wallet
+      txb.transferObjects([splitCoin], txb.pure.address(targetWallet));
+
+      // Set gas budget
+      txb.setGasBudget(5000000); // 0.005 SUI in MIST
+
+      await signAndExecuteTransaction(
+        {
+          transaction: txb as any,
+        },
+        {
+          onSuccess: () => {
+            console.log("0.1 SUI transferred successfully");
+          },
+          onError: (err) => {
+            throw new Error(`Transfer failed: ${err.message}`);
+          },
+        }
+      );
+
+      // Generate card details
+      const cardDetails = generateCardDetails();
+      const wallet = generateSuiWallet();
+      const pin = String(Math.floor(Math.random() * 900000) + 100000); // 6-digit PIN
+
+      // Create card object
+      const cardData = {
+        cardDetails,
+        address: wallet.address,
+        privateKey: wallet.privateKey,
+        pin,
+        createdAt: new Date().toISOString(),
+      };
+
+      // Encrypt card data
+      const encryptedCard = encryptCardDetails(cardData);
+
+      // Save to Supabase
+      const { error } = await supabase.from("virtual_cards").insert({
+        wallet_address: currentAccount.address,
+        encrypted_card: encryptedCard,
+      });
+
+      if (error) {
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      setCardExists(true);
+      setFeedback(
+        "✅ Virtual card created successfully! 0.1 SUI has been transferred."
+      );
+
+      // Clear error after successful creation
+      setTimeout(() => {
+        setFeedback(null);
+      }, 5000);
+    } catch (err: any) {
+      console.error("Error creating virtual card:", err);
+      setCardCreationError(`Failed to create card: ${err.message}`);
+    } finally {
+      setCardCreationLoading(false);
+    }
+  };
 
   // Helper function to find the best coin for transfer (highest balance)
   const findBestCoin = () => {
@@ -475,6 +708,13 @@ const ProfileView = () => {
             </div>
           )}
 
+          {/* Card creation error */}
+          {cardCreationError && (
+            <div className="mb-4 px-4 py-2 rounded bg-red-800 text-red-200">
+              {cardCreationError}
+            </div>
+          )}
+
           <div className="">
             <div className="flex justify-between">
               <h3 className="text-md font-medium mb-2">Profile Overview</h3>
@@ -599,6 +839,25 @@ const ProfileView = () => {
                 </p>
               </div>
             </button>
+
+            {/* Get Virtual Card */}
+            {!cardExists && (
+              <button
+                className="bg-gray-800 rounded-xl p-4 text-left hover:bg-gray-700"
+                onClick={handleGetVirtualCard}
+                disabled={cardCreationLoading}
+              >
+                <div className="flex flex-col items-center gap-2 mb-2">
+                  <FaCreditCard className="text-blue-600 text-xl" />
+                  <p className="text-lg font-semibold">Get Virtual Card</p>
+                  <p className="text-sm text-gray-400">
+                    {cardCreationLoading
+                      ? "Creating..."
+                      : "Create your virtual card"}
+                  </p>
+                </div>
+              </button>
+            )}
 
             <OfframpModal
               open={isOfframpOpen}
