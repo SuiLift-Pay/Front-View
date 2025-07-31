@@ -101,6 +101,7 @@ import Header from "./Header";
 import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
 import { supabase } from "../utils/supabaseClient";
 import CryptoJS from "crypto-js";
+import ATMCard from "./ATMCard"
 
 const ENCRYPTION_SECRET = import.meta.env.VITE_ENCRYPTION_SECRET as string;
 
@@ -191,7 +192,7 @@ const CardDetails = () => {
   }, [walletAddress, suiClient]);
 
   return (
-    <div className="p-6 md:px-6 lg:px-10">
+    <div className="p-6 md:px-6 lg:px-10 mt-10">
       {/* Header */}
       <Header name={name} walletAddress={walletAddress} />
       {/* Profile */}
@@ -244,6 +245,12 @@ const CardDetails = () => {
                 </div>
               )}
             </div>
+            <ATMCard
+        cardNumber="1234 5678 9012 3456"
+        holderName="JOHN DOE"
+        expiryDate="12/25"
+        cvv="123"
+      />
 
             {/* Benefits List */}
             <div className="space-y-6">
