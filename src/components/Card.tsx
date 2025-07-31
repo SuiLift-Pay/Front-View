@@ -5,6 +5,8 @@ interface CardProps {
   cardHolder: string;
   expiry: string;
   cvv: string;
+  walletAddress?: string;
+  balance?: number;
 }
 
 // Helper to shorten wallet address (if applicable)
@@ -13,7 +15,14 @@ const shortenAddress = (address: string) => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 };
 
-const Card: React.FC<CardProps> = ({ cardNumber, cardHolder, expiry, cvv }) => {
+const Card: React.FC<CardProps> = ({
+  cardNumber,
+  cardHolder,
+  expiry,
+  cvv,
+  walletAddress,
+  balance,
+}) => {
   const [flipped, setFlipped] = useState(false);
 
   return (
@@ -29,20 +38,49 @@ const Card: React.FC<CardProps> = ({ cardNumber, cardHolder, expiry, cvv }) => {
         >
           {/* Front Side */}
           <div
-            className="absolute inset-0 rounded-lg text-white bg-cover bg-center flex flex-col justify-end p-10 shadow-lg [backface-visibility:hidden]"
+            className="absolute inset-0 rounded-lg text-white bg-cover bg-center flex flex-col justify-between p-6 shadow-lg [backface-visibility:hidden]"
             style={{ backgroundImage: `url(/images/Frame 29631.svg)` }}
           >
-            <p className="text-lg tracking-wides font-mono absolute left-[55%] transform -translate-y-29">
-              {shortenAddress(cardHolder)}
-            </p>
-            {/* Card Number */}
-            <p className="text-2xl tracking-widest font-mono z-10  absolute top-1/2 left-6 transform -translate-y-1/2">
-              {cardNumber}
-            </p>
-            {/* Expiry */}
-            <p className="absolute bottom-6 left-6 text-sm mt-5 font-mono">
-              Exp: {expiry}
-            </p>
+            {/* Top section - Balance and Wallet Address */}
+            <div className="flex justify-between items-start">
+              <div>
+                {balance !== undefined && (
+                  <div className="text-sm">
+                    <span className="text-xs opacity-75">Balance</span>
+                    <div className="text-lg font-bold">
+                      {balance.toFixed(4)} SUI
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="text-right">
+                {walletAddress && (
+                  <div className="text-xs opacity-75">
+                    <div>Card Wallet</div>
+                    <div className="font-mono">
+                      {shortenAddress(walletAddress)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Middle section - Card Number */}
+            <div className="flex-1 flex items-center">
+              <p className="text-2xl tracking-widest font-mono">{cardNumber}</p>
+            </div>
+
+            {/* Bottom section - Expiry and Cardholder */}
+            <div className="flex justify-between items-end">
+              <div>
+                <p className="text-sm font-mono">Exp: {expiry}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-mono">
+                  {shortenAddress(cardHolder)}
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Back Side */}

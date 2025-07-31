@@ -98,7 +98,7 @@ import { useEffect, useState } from "react";
 import { FaBolt, FaGlobe, FaShieldAlt, FaCoins } from "react-icons/fa";
 import Card from "./Card";
 import Header from "./Header";
-import { useCurrentAccount } from "@mysten/dapp-kit";
+import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
 import { supabase } from "../utils/supabaseClient";
 import CryptoJS from "crypto-js";
 import ATMCard from "./ATMCard"
@@ -108,9 +108,11 @@ const ENCRYPTION_SECRET = import.meta.env.VITE_ENCRYPTION_SECRET as string;
 const CardDetails = () => {
   const name = "..";
   const currentAccount = useCurrentAccount();
+  const suiClient = useSuiClient();
   const walletAddress = currentAccount?.address ?? "";
 
   const [decryptedCard, setDecryptedCard] = useState<any>(null);
+  const [cardWalletBalance, setCardWalletBalance] = useState<number>(0);
 
   // Helper to shorten wallet address
   const shortenAddress = (address: string) => {
@@ -118,37 +120,76 @@ const CardDetails = () => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
+  // Function to fetch card wallet balance
+  const fetchCardWalletBalance = async (cardWalletAddress: string) => {
+    try {
+      const coinData = await suiClient.getCoins({
+        owner: cardWalletAddress,
+        coinType: "0x2::sui::SUI",
+      });
+      const total = coinData.data.reduce(
+        (sum, coin) => sum + Number(coin.balance),
+        0
+      );
+      setCardWalletBalance(total / 1_000_000_000);
+    } catch (err: any) {
+      console.error("Error fetching card wallet balance:", err);
+      setCardWalletBalance(0);
+    }
+  };
+
   useEffect(() => {
     const fetchCard = async () => {
       if (!walletAddress) return;
-      const { data } = await supabase
-        .from("virtual_cards")
-        .select("encrypted_card")
-        .eq("wallet_address", walletAddress)
-        .single();
 
-      if (data?.encrypted_card) {
-        try {
-          const bytes = CryptoJS.AES.decrypt(
-            data.encrypted_card,
-            ENCRYPTION_SECRET
-          );
-          const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-          const cardObj = JSON.parse(decrypted);
-          setDecryptedCard(cardObj);
+      try {
+        const { data, error } = await supabase
+          .from("virtual_cards")
+          .select("encrypted_card")
+          .eq("wallet_address", walletAddress)
+          .single();
 
-          // Log decrypted card details and shortened wallet address
-          console.log("Decrypted Card Details:", cardObj);
-          console.log("Wallet Address (short):", shortenAddress(walletAddress));
-        } catch (e) {
+        if (error && error.code !== "PGRST116") {
+          console.error("Error fetching card:", error);
+          setDecryptedCard(null);
+          return;
+        }
+
+        if (data?.encrypted_card) {
+          try {
+            const bytes = CryptoJS.AES.decrypt(
+              data.encrypted_card,
+              ENCRYPTION_SECRET
+            );
+            const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+            const cardObj = JSON.parse(decrypted);
+            setDecryptedCard(cardObj);
+
+            // Fetch card wallet balance
+            if (cardObj.address) {
+              await fetchCardWalletBalance(cardObj.address);
+            }
+
+            // Log decrypted card details and shortened wallet address
+            console.log("Decrypted Card Details:", cardObj);
+            console.log(
+              "Wallet Address (short):",
+              shortenAddress(walletAddress)
+            );
+          } catch (e) {
+            console.error("Error decrypting card:", e);
+            setDecryptedCard(null);
+          }
+        } else {
           setDecryptedCard(null);
         }
-      } else {
+      } catch (err) {
+        console.error("Unexpected error fetching card:", err);
         setDecryptedCard(null);
       }
     };
     fetchCard();
-  }, [walletAddress]);
+  }, [walletAddress, suiClient]);
 
   return (
     <div className="p-6 md:px-6 lg:px-10 mt-10">
@@ -183,10 +224,20 @@ const CardDetails = () => {
               <p className="text-sm mb-2">Virtual Card</p>
               {decryptedCard ? (
                 <Card
-                  cardNumber={decryptedCard.cardNumber}
-                  cardHolder={decryptedCard.cardHolder}
-                  expiry={decryptedCard.expiry}
-                  cvv={decryptedCard.cvv}
+                  cardNumber={
+                    decryptedCard.cardDetails?.cardNumber ||
+                    decryptedCard.cardNumber
+                  }
+                  cardHolder={
+                    decryptedCard.cardDetails?.cardHolder ||
+                    decryptedCard.cardHolder
+                  }
+                  expiry={
+                    decryptedCard.cardDetails?.expiry || decryptedCard.expiry
+                  }
+                  cvv={decryptedCard.cardDetails?.cvv || decryptedCard.cvv}
+                  walletAddress={decryptedCard.address}
+                  balance={cardWalletBalance}
                 />
               ) : (
                 <div className="text-gray-400">
