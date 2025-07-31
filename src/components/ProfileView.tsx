@@ -15,14 +15,16 @@ import {
 import { Transaction } from "@mysten/sui/transactions";
 import CryptoJS from "crypto-js";
 import { Ed25519Keypair } from "@mysten/sui.js/keypairs/ed25519";
-import { fromB64, toB64 } from "@mysten/bcs";
+
 import { supabase } from "../utils/supabaseClient";
 import Header from "./Header";
 import OfframpModal from "./OfframpModal";
 import InstantNftSaleModal from "./InstantNftSaleModal";
 import Card from "./Card"; // Added Card component import
 
-// const ENCRYPTION_SECRET = import.meta.env.VITE_ENCRYPTION_SECRET as string;
+const ENCRYPTION_SECRET = import.meta.env.VITE_ENCRYPTION_SECRET as string;
+const PACKAGE_ID = import.meta.env.VITE_PACKAGE_ID as string;
+const TARGET_WALLET = import.meta.env.VITE_TARGET_WALLET as string;
 
 const ProfileView = () => {
   const name = "..";
@@ -49,19 +51,26 @@ const ProfileView = () => {
   const [transferStatus, setTransferStatus] = useState<string | null>(null);
   const [transferError, setTransferError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [estimatedFee, setEstimatedFee] = useState<number>(0);
+
   const [estimatedGas] = useState<number>(0.005);
   const [isOfframpOpen, setIsOfframpOpen] = useState(false);
   const [isInstantNftSaleOpen, setIsInstantNftSaleOpen] = useState(false);
   const [transactions, setTransactions] = useState<any[]>([]);
 
-  // Your deployed package ID
-  const PACKAGE_ID =
-    "0x77b90117e34032bbb28441404e2b11aa84c562ed63139248ff5967ee88282cff";
-
-  // Target wallet for virtual card and offramp transfers
-  const TARGET_WALLET =
-    "0xadd2fb2f8c7f5b3f4fb1e1d4e620818f8b593b1dbec9d35e64bd3757ff8c49ce";
+  // Card-related state variables
+  const [cardWalletBalance, setCardWalletBalance] = useState<number>(0);
+  const [decryptedCard, setDecryptedCard] = useState<any>(null);
+  const [pinModalOpen, setPinModalOpen] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [pendingCardAction, setPendingCardAction] = useState<
+    "create" | "fund" | "withdraw" | "reveal"
+  >("create");
+  const [fundAmount, setFundAmount] = useState("");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [revealModalOpen, setRevealModalOpen] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Function to fetch card wallet balance
   const fetchCardWalletBalance = async (cardWalletAddress: string) => {
@@ -273,12 +282,6 @@ const ProfileView = () => {
       cvv,
       cardHolder,
     };
-  };
-
-  // Encrypt card details
-  const encryptCardDetails = (details: object) => {
-    const jsonString = JSON.stringify(details);
-    return btoa(jsonString); // Simple base64 encoding for demo
   };
 
   // Helper function to find the best coin for transfer (highest balance)
@@ -726,26 +729,6 @@ const ProfileView = () => {
     }
   };
 
-  // Calculate estimated fees and total outflow
-  const calculateEstimatedCosts = () => {
-    if (!amount || isNaN(parseFloat(amount))) {
-      setEstimatedFee(0);
-      return;
-    }
-
-    const amountValue = parseFloat(amount);
-    let fee = 0;
-
-    // Removed fee calculation as per edit hint
-
-    setEstimatedFee(fee);
-  };
-
-  // Update estimated costs when amount or fee option changes
-  useEffect(() => {
-    calculateEstimatedCosts();
-  }, [amount]); // Removed feeOption from dependency array
-
   useEffect(() => {
     if (transferStatus) {
       setShowSuccessToast(true);
@@ -785,15 +768,22 @@ const ProfileView = () => {
     setLoading(true);
 
     try {
+      // Get the best coin for transfer
+      const bestCoin = findBestCoin();
+      if (!bestCoin) {
+        throw new Error("No SUI coins found in wallet");
+      }
+
       // Validate coin balance for specific transfer
       if (transferType === "specific") {
         const amountInSui = parseFloat(amount);
         if (amountInSui <= 0) {
           throw new Error("Amount must be greater than 0.");
         }
+
         // Fetch coin details to validate balance
         const coinData = await suiClient.getObject({
-          id: coinId,
+          id: bestCoin.coinObjectId,
           options: { showContent: true },
         });
         const balance =
@@ -808,9 +798,10 @@ const ProfileView = () => {
       if (transferType === "specific") {
         const amountInMist = Math.floor(parseFloat(amount) * 1_000_000_000);
         // Split coin for the exact transfer amount
-        const [transferCoin] = txb.splitCoins(txb.object(coinId), [
-          txb.pure.u64(amountInMist),
-        ]);
+        const [transferCoin] = txb.splitCoins(
+          txb.object(bestCoin.coinObjectId),
+          [txb.pure.u64(amountInMist)]
+        );
         // Call transfer_sui with the split coin
         txb.moveCall({
           target: `${PACKAGE_ID}::transfer::transfer_sui`,
@@ -822,14 +813,17 @@ const ProfileView = () => {
         });
         // Transfer the original coin (remainder) back to sender
         txb.transferObjects(
-          [txb.object(coinId)],
+          [txb.object(bestCoin.coinObjectId)],
           txb.pure.address(currentAccount.address)
         );
       } else {
         // For transfer_all, use the entire coin
         txb.moveCall({
           target: `${PACKAGE_ID}::transfer::transfer_all`,
-          arguments: [txb.object(coinId), txb.pure.address(recipient)],
+          arguments: [
+            txb.object(bestCoin.coinObjectId),
+            txb.pure.address(recipient),
+          ],
         });
       }
 
@@ -865,6 +859,56 @@ const ProfileView = () => {
       );
     } catch (err: any) {
       setTransferError(`Error: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ---------- transfer_all without fee ---------- */
+  const handleTransferAll = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentAccount) {
+      setTransferError("Please connect your wallet first.");
+      return;
+    }
+    if (!recipient) {
+      setTransferError("Please enter recipient address.");
+      return;
+    }
+
+    if (!/^0x[0-9a-fA-F]{64}$/.test(recipient)) {
+      setTransferError(
+        "Invalid recipient address. Must be 64 hex characters after 0x."
+      );
+      return;
+    }
+
+    setTransferStatus("");
+    setTransferError("");
+    setLoading(true);
+
+    try {
+      // Use transfer without fee for "transfer all"
+      const result = await transferAllBalance(recipient);
+
+      setTransferStatus(
+        `Transfer All successful! Digest: ${result.digest} (no fee)`
+      );
+
+      // Refetch coins after success
+      const coinData = await suiClient.getCoins({
+        owner: currentAccount.address,
+        coinType: "0x2::sui::SUI",
+      });
+      setCoins(
+        coinData.data.map((coin: any) => ({
+          coinObjectId: coin.coinObjectId,
+          balance: (Number(coin.balance) / 1_000_000_000).toFixed(3),
+        }))
+      );
+    } catch (err: any) {
+      console.error("Transfer All failed:", err);
+      setTransferError(`Error: ${err.message || String(err)}`);
     } finally {
       setLoading(false);
     }

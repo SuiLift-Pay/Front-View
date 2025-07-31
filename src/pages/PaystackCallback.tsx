@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import axios from "axios";
 
-const PAYSTACK_SECRET = "sk_test_b6c1acf1bd7a2d2d4bc068bb47aa78d0d5a0a9ce";
+const PAYSTACK_SECRET = import.meta.env.VITE_PAYSTACK_SECRET as string;
 
 const PaystackCallback = () => {
   useEffect(() => {

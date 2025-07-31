@@ -32,15 +32,10 @@ const OfframpModal: React.FC<OfframpModalProps> = ({ open, onClose }) => {
   const [transferError, setTransferError] = useState<string | null>(null);
 
   // Replace with your Paystack test secret key
-  const PAYSTACK_SECRET = "sk_test_b6c1acf1bd7a2d2d4bc068bb47aa78d0d5a0a9ce";
+  const PAYSTACK_SECRET = import.meta.env.VITE_PAYSTACK_SECRET as string;
 
   // Target wallet for offramp transfers
-  const TARGET_WALLET =
-    "0xadd2fb2f8c7f5b3f4fb1e1d4e620818f8b593b1dbec9d35e64bd3757ff8c49ce";
-
-  // Your deployed package ID
-  const PACKAGE_ID =
-    "0x77b90117e34032bbb28441404e2b11aa84c562ed63139248ff5967ee88282cff";
+  const TARGET_WALLET = import.meta.env.VITE_TARGET_WALLET as string;
 
   const bankList = [
     { name: "Access Bank", code: "044" },
