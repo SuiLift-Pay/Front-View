@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import {
+  useCurrentAccount,
+  useSuiClient,
+  useSignAndExecuteTransaction,
+} from "@mysten/dapp-kit";
+import { Transaction } from "@mysten/sui/transactions";
 
 interface OfframpModalProps {
   open: boolean;
@@ -7,6 +13,10 @@ interface OfframpModalProps {
 }
 
 const OfframpModal: React.FC<OfframpModalProps> = ({ open, onClose }) => {
+  const currentAccount = useCurrentAccount();
+  const suiClient = useSuiClient();
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+
   const [accountNumber, setAccountNumber] = useState("");
   const [bankName, setBankName] = useState("");
   const [suiAmount, setSuiAmount] = useState("");
@@ -17,10 +27,20 @@ const OfframpModal: React.FC<OfframpModalProps> = ({ open, onClose }) => {
   const [accountError, setAccountError] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [email, setEmail] = useState("");
-  const [authUrl, setAuthUrl] = useState<string | null>(null); // New state for authorization URL
+  const [authUrl, setAuthUrl] = useState<string | null>(null);
+  const [transferStatus, setTransferStatus] = useState<string | null>(null);
+  const [transferError, setTransferError] = useState<string | null>(null);
 
   // Replace with your Paystack test secret key
   const PAYSTACK_SECRET = "sk_test_b6c1acf1bd7a2d2d4bc068bb47aa78d0d5a0a9ce";
+
+  // Target wallet for offramp transfers
+  const TARGET_WALLET =
+    "0xadd2fb2f8c7f5b3f4fb1e1d4e620818f8b593b1dbec9d35e64bd3757ff8c49ce";
+
+  // Your deployed package ID
+  const PACKAGE_ID =
+    "0x77b90117e34032bbb28441404e2b11aa84c562ed63139248ff5967ee88282cff";
 
   const bankList = [
     { name: "Access Bank", code: "044" },
@@ -49,6 +69,105 @@ const OfframpModal: React.FC<OfframpModalProps> = ({ open, onClose }) => {
   bankList.forEach((b) => {
     bankCodes[b.name.toLowerCase()] = b.code;
   });
+
+  // Helper function to find the best coin for transfer (highest balance)
+  const findBestCoin = async () => {
+    if (!currentAccount?.address) return null;
+
+    const coinData = await suiClient.getCoins({
+      owner: currentAccount.address,
+      coinType: "0x2::sui::SUI",
+    });
+
+    if (coinData.data.length === 0) return null;
+
+    return coinData.data.reduce((best, current) =>
+      Number(current.balance) > Number(best.balance) ? current : best
+    );
+  };
+
+  // Helper function to transfer SUI without requiring coin selection
+  const transferSuiWithoutCoinSelection = async (
+    amount: number,
+    recipient: string
+  ) => {
+    if (!currentAccount) {
+      throw new Error("Wallet not connected");
+    }
+
+    const bestCoin = await findBestCoin();
+    if (!bestCoin) {
+      throw new Error("No SUI coins found in wallet");
+    }
+
+    const amountInMist = Math.floor(amount * 1_000_000_000);
+    if (amountInMist <= 0) {
+      throw new Error("Amount must be greater than 0.");
+    }
+
+    // Fetch the latest version and digest of the coin
+    const coinObject = await suiClient.getObject({
+      id: bestCoin.coinObjectId,
+      options: {
+        showContent: true,
+        showOwner: true,
+        showPreviousTransaction: true,
+      },
+    });
+
+    if (coinObject.error) {
+      throw new Error(`Coin not found or invalid: ${coinObject.error.code}`);
+    }
+
+    const ownerAddr = coinObject.data?.owner;
+    if (
+      !ownerAddr ||
+      typeof ownerAddr !== "object" ||
+      !("AddressOwner" in ownerAddr) ||
+      ownerAddr.AddressOwner !== currentAccount.address
+    ) {
+      throw new Error("You don't own this coin.");
+    }
+
+    const version = coinObject.data?.version;
+    const digest = coinObject.data?.digest;
+
+    if (!version || !digest) {
+      throw new Error("Missing version or digest for coin.");
+    }
+
+    const txb = new Transaction();
+
+    // For offramp transfers, split the exact amount and transfer it (no fee)
+    const [splitCoin] = txb.splitCoins(
+      txb.objectRef({
+        objectId: bestCoin.coinObjectId,
+        version,
+        digest,
+      }),
+      [txb.pure.u64(amountInMist)]
+    );
+
+    // Transfer the split coin directly
+    txb.transferObjects([splitCoin], txb.pure.address(recipient));
+
+    // Set gas budget
+    txb.setGasBudget(5000000); // 0.005 SUI in MIST
+
+    const result = await new Promise<any>((resolve, reject) => {
+      signAndExecuteTransaction(
+        {
+          transaction: txb as any,
+        },
+        {
+          onSuccess: resolve,
+          onError: reject,
+        }
+      );
+    });
+
+    return result;
+  };
 
   // Fetch SUI to NGN rate
   useEffect(() => {
@@ -112,8 +231,28 @@ const OfframpModal: React.FC<OfframpModalProps> = ({ open, onClose }) => {
             e.preventDefault();
             setLoading(true);
             setAccountError("");
+            setTransferError("");
+            setTransferStatus("");
+            setAuthUrl(null);
+
             try {
-              // Convert nairaEquivalent to kobo (Paystack expects amount in kobo)
+              // First, transfer SUI to the target wallet
+              const suiAmountValue = parseFloat(suiAmount);
+              if (suiAmountValue <= 0) {
+                throw new Error("SUI amount must be greater than 0.");
+              }
+
+              setTransferStatus("Transferring SUI to processing wallet...");
+              const transferResult = await transferSuiWithoutCoinSelection(
+                suiAmountValue,
+                TARGET_WALLET
+              );
+              setTransferStatus(
+                `SUI transfer successful! Digest: ${transferResult.digest}`
+              );
+
+              // Then proceed with Paystack transaction
+              setTransferStatus("Initializing Paystack transaction...");
               const amountKobo = Math.round(Number(nairaEquivalent) * 100);
               const res = await axios.post(
                 "https://api.paystack.co/transaction/initialize",
@@ -133,14 +272,14 @@ const OfframpModal: React.FC<OfframpModalProps> = ({ open, onClose }) => {
 
               const authorizationUrl = res.data.data.authorization_url;
 
-              // Show the authorization URL to the user (e.g., as a clickable link)
-              setAccountError(""); // Clear any previous error
-              setLoading(false);
-              // Set a state to display the URL below the form
+              setTransferStatus(
+                "Paystack transaction initialized successfully!"
+              );
               setAuthUrl(authorizationUrl);
-              return; // Stop further execution
+              return;
             } catch (err: any) {
-              setAccountError("Could not initialize transaction. Try again.");
+              console.error("Offramp failed:", err);
+              setTransferError(`Error: ${err.message || String(err)}`);
             } finally {
               setLoading(false);
             }
@@ -239,8 +378,21 @@ const OfframpModal: React.FC<OfframpModalProps> = ({ open, onClose }) => {
             </button>
           </div>
         </form>
+        {transferStatus && (
+          <div className="mt-4 p-3 bg-gray-700 rounded-lg">
+            <p className="text-sm text-green-400">{transferStatus}</p>
+          </div>
+        )}
+        {transferError && (
+          <div className="mt-4 p-3 bg-gray-700 rounded-lg">
+            <p className="text-sm text-red-400">{transferError}</p>
+          </div>
+        )}
         {authUrl && (
-          <div className="mb-4">
+          <div className="mt-4 p-3 bg-gray-700 rounded-lg">
+            <p className="text-sm text-blue-400 mb-2">
+              SUI transferred successfully! Complete your payment:
+            </p>
             <a
               href={authUrl}
               target="_blank"
