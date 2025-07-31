@@ -41,7 +41,7 @@ const Header: React.FC<HeaderProps> = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 md:left-64 right-0 z-50 bg-gray-00 border-b border-gray-700 shadow-md">
+    <header className="fixed top-0 left-0 md:left-64 right-0 z-50 bg-gray-00 border-b border-gray-700 shadow-lg">
       <div className="w-full max-w-full px-2 sm:px-4 md:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14 sm:h-16">
           {/* Left side - Welcome message */}
