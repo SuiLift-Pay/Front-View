@@ -79,6 +79,14 @@ const ProfileView = () => {
         owner: cardWalletAddress,
         coinType: "0x2::sui::SUI",
       });
+      
+      // Check if coinData.data exists and is an array
+      if (!coinData.data || !Array.isArray(coinData.data)) {
+        console.warn("No coin data found for card wallet:", cardWalletAddress);
+        setCardWalletBalance(0);
+        return;
+      }
+      
       const total = coinData.data.reduce(
         (sum, coin) => sum + Number(coin.balance),
         0
@@ -175,6 +183,15 @@ const ProfileView = () => {
           owner: currentAccount.address,
           coinType: "0x2::sui::SUI",
         });
+        
+        // Check if coinData.data exists and is an array
+        if (!coinData.data || !Array.isArray(coinData.data)) {
+          console.warn("No coin data found for wallet:", currentAccount.address);
+          setSuiBalance(0);
+          setCoins([]);
+          return;
+        }
+        
         const total = coinData.data.reduce(
           (sum, coin) => sum + Number(coin.balance),
           0
@@ -286,7 +303,7 @@ const ProfileView = () => {
 
   // Helper function to find the best coin for transfer (highest balance)
   const findBestCoin = () => {
-    if (coins.length === 0) return null;
+    if (!coins || coins.length === 0) return null;
     return coins.reduce((best, current) =>
       parseFloat(current.balance) > parseFloat(best.balance) ? current : best
     );
@@ -499,6 +516,18 @@ const ProfileView = () => {
 
   // Modified handleGetVirtualCard
   const handleGetVirtualCard = async () => {
+    // Check if coins are loaded and available
+    if (!coins || coins.length === 0) {
+      setFeedback("❌ Please wait for wallet data to load before creating a card");
+      return;
+    }
+    
+    // Check if user has sufficient balance
+    if (!suiBalance || suiBalance < 0.1) {
+      setFeedback("❌ Insufficient balance. You need at least 0.1 SUI to create a virtual card");
+      return;
+    }
+    
     setPendingCardAction("create");
     setPinModalOpen(true);
   };
@@ -844,12 +873,16 @@ const ProfileView = () => {
                 coinType: "0x2::sui::SUI",
               })
               .then((coinData) => {
-                setCoins(
-                  coinData.data.map((coin) => ({
-                    coinObjectId: coin.coinObjectId,
-                    balance: (Number(coin.balance) / 1_000_000_000).toFixed(3),
-                  }))
-                );
+                if (coinData.data && Array.isArray(coinData.data)) {
+                  setCoins(
+                    coinData.data.map((coin) => ({
+                      coinObjectId: coin.coinObjectId,
+                      balance: (Number(coin.balance) / 1_000_000_000).toFixed(3),
+                    }))
+                  );
+                } else {
+                  setCoins([]);
+                }
               });
           },
           onError: (err) => {
@@ -900,12 +933,17 @@ const ProfileView = () => {
         owner: currentAccount.address,
         coinType: "0x2::sui::SUI",
       });
-      setCoins(
-        coinData.data.map((coin: any) => ({
-          coinObjectId: coin.coinObjectId,
-          balance: (Number(coin.balance) / 1_000_000_000).toFixed(3),
-        }))
-      );
+      
+      if (coinData.data && Array.isArray(coinData.data)) {
+        setCoins(
+          coinData.data.map((coin: any) => ({
+            coinObjectId: coin.coinObjectId,
+            balance: (Number(coin.balance) / 1_000_000_000).toFixed(3),
+          }))
+        );
+      } else {
+        setCoins([]);
+      }
     } catch (err: any) {
       console.error("Transfer All failed:", err);
       setTransferError(`Error: ${err.message || String(err)}`);
@@ -1019,24 +1057,28 @@ const ProfileView = () => {
               <div className="bg-gray-800 rounded-lg p-4 flex flex-col items-center gap-2">
                 <p className="text-lg">Total Spent</p>
                 <p className="text-xl font-bold">
-                  {transactions
-                    .reduce((total, tx) => {
-                      const gasCost = tx.gasUsed?.computationCost
-                        ? Number(tx.gasUsed.computationCost) / 1000000000
-                        : 0;
-                      return total + gasCost;
-                    }, 0)
-                    .toFixed(4)}{" "}
+                  {transactions && transactions.length > 0
+                    ? transactions
+                        .reduce((total, tx) => {
+                          const gasCost = tx.gasUsed?.computationCost
+                            ? Number(tx.gasUsed.computationCost) / 1000000000
+                            : 0;
+                          return total + gasCost;
+                        }, 0)
+                        .toFixed(4)
+                    : "0.0000"}{" "}
                   SUI
                 </p>
                 <p className="text-md text-green-400">
                   {(() => {
-                    const totalSpent = transactions.reduce((total, tx) => {
-                      const gasCost = tx.gasUsed?.computationCost
-                        ? Number(tx.gasUsed.computationCost) / 1000000000
-                        : 0;
-                      return total + gasCost;
-                    }, 0);
+                    const totalSpent = transactions && transactions.length > 0
+                      ? transactions.reduce((total, tx) => {
+                          const gasCost = tx.gasUsed?.computationCost
+                            ? Number(tx.gasUsed.computationCost) / 1000000000
+                            : 0;
+                          return total + gasCost;
+                        }, 0)
+                      : 0;
                     return suiPrice
                       ? `$${(totalSpent * suiPrice).toFixed(2)} USDT`
                       : priceLoading

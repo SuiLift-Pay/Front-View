@@ -126,6 +126,13 @@ const CardDetails = () => {
         owner: cardWalletAddress,
         coinType: "0x2::sui::SUI",
       });
+      // Check if coinData.data exists and is an array
+      if (!coinData.data || !Array.isArray(coinData.data)) {
+        console.warn("No coin data found for card wallet:", cardWalletAddress);
+        setCardWalletBalance(0);
+        return;
+      }
+
       const total = coinData.data.reduce(
         (sum, coin) => sum + Number(coin.balance),
         0
