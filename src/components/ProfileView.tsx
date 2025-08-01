@@ -44,9 +44,6 @@ const ProfileView = () => {
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
 
-  const [coins, setCoins] = useState<
-    { coinObjectId: string; balance: string }[]
-  >([]);
   const [transferType, setTransferType] = useState<"specific" | "all">(
     "specific"
   );
@@ -168,7 +165,6 @@ const ProfileView = () => {
     const fetchBalanceAndCard = async () => {
       if (!currentAccount?.address) {
         setSuiBalance(null);
-        setCoins([]);
 
         return;
       }
@@ -184,12 +180,6 @@ const ProfileView = () => {
           0
         );
         setSuiBalance(total / 1_000_000_000);
-        setCoins(
-          coinData.data.map((coin) => ({
-            coinObjectId: coin.coinObjectId,
-            balance: (Number(coin.balance) / 1_000_000_000).toFixed(3),
-          }))
-        );
 
         // Load recent transactions for total spent calculation
         const txData = await suiClient.queryTransactionBlocks({
@@ -233,12 +223,6 @@ const ProfileView = () => {
         0
       );
       setSuiBalance(total / 1_000_000_000);
-      setCoins(
-        coinData.data.map((coin) => ({
-          coinObjectId: coin.coinObjectId,
-          balance: (Number(coin.balance) / 1_000_000_000).toFixed(3),
-        }))
-      );
 
       // Refresh transactions
       const txData = await suiClient.queryTransactionBlocks({
@@ -280,11 +264,20 @@ const ProfileView = () => {
 
   // Helper function to generate card details
   const generateCardDetails = () => {
-    const cardNumber = Array.from({ length: 4 }, () =>
-      Math.floor(Math.random() * 10000)
-        .toString()
-        .padStart(4, "0")
-    ).join(" ");
+    // Generate a unique 4-digit prefix using timestamp and random numbers
+    const timestamp = Date.now().toString().slice(-3); // Last 3 digits of timestamp
+    const randomDigit = Math.floor(Math.random() * 10);
+    const uniquePrefix = `${timestamp}${randomDigit}`.padStart(4, "0");
+
+    // Generate the remaining 8 digits (to make total 16: 1921 + 4 unique + 8 remaining)
+    const remainingDigits = Array.from({ length: 8 }, () =>
+      Math.floor(Math.random() * 10)
+    ).join("");
+
+    // Use "1921" as fixed prefix + unique 4 digits + remaining 8 digits
+    const cardNumber = `1921${uniquePrefix}${remainingDigits}`
+      .replace(/(.{4})/g, "$1 ")
+      .trim();
 
     const expiryMonth = String(Math.floor(Math.random() * 12) + 1).padStart(
       2,
@@ -296,7 +289,7 @@ const ProfileView = () => {
     const expiry = `${expiryMonth}/${expiryYear.slice(-2)}`;
 
     const cvv = String(Math.floor(Math.random() * 1000)).padStart(3, "0");
-    const cardHolder = "CARD HOLDER";
+    const cardHolder = currentAccount?.address || "CARD HOLDER";
 
     return {
       cardNumber,
@@ -444,20 +437,6 @@ const ProfileView = () => {
     } finally {
       setCardCreationLoading(false);
     }
-  };
-
-  // Helper function to find the best coin for transfer (highest balance)
-  const findBestCoin = () => {
-    console.log("Available coins:", coins);
-    if (coins.length === 0) {
-      console.log("No coins found");
-      return null;
-    }
-    const bestCoin = coins.reduce((best, current) =>
-      parseFloat(current.balance) > parseFloat(best.balance) ? current : best
-    );
-    console.log("Best coin selected:", bestCoin);
-    return bestCoin;
   };
 
   // Helper function to transfer a specific amount of SUI

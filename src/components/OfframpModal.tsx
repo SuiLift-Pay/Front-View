@@ -74,14 +74,7 @@ const OfframpModal: React.FC<OfframpModalProps> = ({ open, onClose }) => {
       coinType: "0x2::sui::SUI",
     });
 
-    // Check if coinData.data exists and is an array
-    if (
-      !coinData.data ||
-      !Array.isArray(coinData.data) ||
-      coinData.data.length === 0
-    ) {
-      return null;
-    }
+    if (coinData.data.length === 0) return null;
 
     return coinData.data.reduce((best, current) =>
       Number(current.balance) > Number(best.balance) ? current : best

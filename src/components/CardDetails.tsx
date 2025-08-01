@@ -11,11 +11,27 @@ import { Transaction } from "@mysten/sui/transactions";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { supabase } from "../utils/supabaseClient";
 import CryptoJS from "crypto-js";
-import ATMCard from "./ATMCard";
 import SuccessAlert from "./SuccessAlert";
 
 const ENCRYPTION_SECRET = import.meta.env.VITE_ENCRYPTION_SECRET as string;
 const PACKAGE_ID = import.meta.env.VITE_PACKAGE_ID as string;
+
+// Define proper types
+interface CardData {
+  address: string;
+  pin: string;
+  privateKey: string;
+  cardDetails?: {
+    cardNumber: string;
+    cardHolder: string;
+    expiry: string;
+    cvv: string;
+  };
+  cardNumber?: string;
+  cardHolder?: string;
+  expiry?: string;
+  cvv?: string;
+}
 
 const CardDetails = () => {
   const name = "..";
@@ -25,7 +41,7 @@ const CardDetails = () => {
     useSignAndExecuteTransaction();
   const walletAddress = currentAccount?.address ?? "";
 
-  const [decryptedCard, setDecryptedCard] = useState<any>(null);
+  const [decryptedCard, setDecryptedCard] = useState<CardData | null>(null);
   const [cardWalletBalance, setCardWalletBalance] = useState<number>(0);
 
   // Card management state variables
@@ -39,7 +55,6 @@ const CardDetails = () => {
   const [withdrawAmount, setWithdrawAmount] = useState("");
 
   const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -56,19 +71,12 @@ const CardDetails = () => {
         owner: cardWalletAddress,
         coinType: "0x2::sui::SUI",
       });
-      // Check if coinData.data exists and is an array
-      if (!coinData.data || !Array.isArray(coinData.data)) {
-        console.warn("No coin data found for card wallet:", cardWalletAddress);
-        setCardWalletBalance(0);
-        return;
-      }
-
       const total = coinData.data.reduce(
         (sum, coin) => sum + Number(coin.balance),
         0
       );
       setCardWalletBalance(total / 1_000_000_000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error fetching card wallet balance:", err);
       setCardWalletBalance(0);
     }
@@ -79,22 +87,6 @@ const CardDetails = () => {
     if (decryptedCard?.address) {
       await fetchCardWalletBalance(decryptedCard.address);
     }
-  };
-
-  // Helper function to find the best coin for transfer (highest balance)
-  const findBestCoin = async () => {
-    if (!currentAccount?.address) return null;
-
-    const coinData = await suiClient.getCoins({
-      owner: currentAccount.address,
-      coinType: "0x2::sui::SUI",
-    });
-
-    if (coinData.data.length === 0) return null;
-
-    return coinData.data.reduce((best: any, current: any) =>
-      Number(current.balance) > Number(best.balance) ? current : best
-    );
   };
 
   // Helper function to transfer SUI with fee
@@ -208,9 +200,13 @@ const CardDetails = () => {
 
       // Refresh card data
       await refreshCardData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error funding card:", err);
-      setPinError(`Failed to fund card: ${err.message}`);
+      setPinError(
+        `Failed to fund card: ${
+          err instanceof Error ? err.message : "Unknown error"
+        }`
+      );
     } finally {
       setLoading(false);
     }
@@ -286,7 +282,7 @@ const CardDetails = () => {
       const signature = await cardKeypair.signTransaction(builtTx);
 
       // Execute the transaction
-      const result = await suiClient.executeTransactionBlock({
+      await suiClient.executeTransactionBlock({
         transactionBlock: builtTx,
         signature: signature.signature,
         options: {
@@ -306,16 +302,20 @@ const CardDetails = () => {
 
       // Refresh card data
       await refreshCardData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error withdrawing from card:", err);
-      setPinError(`Failed to withdraw: ${err.message}`);
+      setPinError(
+        `Failed to withdraw: ${
+          err instanceof Error ? err.message : "Unknown error"
+        }`
+      );
     } finally {
       setLoading(false);
     }
   };
 
   // Helper: Decrypt card blob
-  function decryptCardBlob(ciphertext: string) {
+  function decryptCardBlob(ciphertext: string): CardData {
     const bytes = CryptoJS.AES.decrypt(ciphertext, ENCRYPTION_SECRET);
     return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
   }
@@ -371,7 +371,7 @@ const CardDetails = () => {
       }
     };
     fetchCard();
-  }, [walletAddress, suiClient]);
+  }, [walletAddress, suiClient, fetchCardWalletBalance]);
 
   return (
     <div className="p-6 md:px-6 lg:px-10 mt-10">
@@ -408,16 +408,18 @@ const CardDetails = () => {
                 <Card
                   cardNumber={
                     decryptedCard.cardDetails?.cardNumber ||
-                    decryptedCard.cardNumber
+                    decryptedCard.cardNumber ||
+                    "0000 0000 0000 0000"
                   }
-                  cardHolder={
-                    decryptedCard.cardDetails?.cardHolder ||
-                    decryptedCard.cardHolder
-                  }
+                  cardHolder={walletAddress}
                   expiry={
-                    decryptedCard.cardDetails?.expiry || decryptedCard.expiry
+                    decryptedCard.cardDetails?.expiry ||
+                    decryptedCard.expiry ||
+                    "MM/YY"
                   }
-                  cvv={decryptedCard.cardDetails?.cvv || decryptedCard.cvv}
+                  cvv={
+                    decryptedCard.cardDetails?.cvv || decryptedCard.cvv || "123"
+                  }
                   walletAddress={decryptedCard.address}
                   balance={cardWalletBalance}
                 />
@@ -427,12 +429,6 @@ const CardDetails = () => {
                 </div>
               )}
             </div>
-            <ATMCard
-              cardNumber="1234 5678 9012 3456"
-              holderName="JOHN DOE"
-              expiryDate="12/25"
-              cvv="123"
-            />
 
             {/* Card Management Section */}
             {decryptedCard && (
@@ -532,15 +528,15 @@ const CardDetails = () => {
       </div>
 
       {/* Feedback message */}
-      {feedback && (
+      {successMessage && (
         <div
           className={`fixed top-6 right-6 z-50 px-4 py-2 rounded ${
-            feedback.startsWith("✅")
+            successMessage.startsWith("✅")
               ? "bg-green-800 text-green-200"
               : "bg-red-800 text-red-200"
           }`}
         >
-          {feedback}
+          {successMessage}
         </div>
       )}
 
