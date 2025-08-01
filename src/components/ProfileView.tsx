@@ -20,6 +20,7 @@ import CryptoJS from "crypto-js";
 import Header from "./Header";
 import OfframpModal from "./OfframpModal";
 import InstantNftSaleModal from "./InstantNftSaleModal";
+import SuccessAlert from "./SuccessAlert";
 
 const PACKAGE_ID = import.meta.env.VITE_PACKAGE_ID as string;
 const ENCRYPTION_SECRET = import.meta.env.VITE_ENCRYPTION_SECRET as string;
@@ -28,7 +29,8 @@ const ProfileView = () => {
   const name = "..";
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const { mutateAsync: signAndExecuteTransaction } =
+    useSignAndExecuteTransaction();
   const walletAddress = currentAccount?.address ?? "Not connected";
   const [suiBalance, setSuiBalance] = useState<number | null>(null);
   const [suiPrice, setSuiPrice] = useState<number | null>(null);
@@ -36,6 +38,8 @@ const ProfileView = () => {
   const [priceError, setPriceError] = useState<string | null>(null);
 
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
@@ -216,6 +220,57 @@ const ProfileView = () => {
     fetchBalanceAndCard();
   }, [currentAccount, suiClient]);
 
+  // Function to refresh all state data
+  const refreshAllData = async () => {
+    if (currentAccount?.address) {
+      // Refresh balance and coins
+      const coinData = await suiClient.getCoins({
+        owner: currentAccount.address,
+        coinType: "0x2::sui::SUI",
+      });
+      const total = coinData.data.reduce(
+        (sum, coin) => sum + Number(coin.balance),
+        0
+      );
+      setSuiBalance(total / 1_000_000_000);
+      setCoins(
+        coinData.data.map((coin) => ({
+          coinObjectId: coin.coinObjectId,
+          balance: (Number(coin.balance) / 1_000_000_000).toFixed(3),
+        }))
+      );
+
+      // Refresh transactions
+      const txData = await suiClient.queryTransactionBlocks({
+        filter: { FromAddress: currentAccount.address },
+        limit: 50,
+        order: "descending",
+        options: {
+          showEffects: true,
+          showInput: true,
+        },
+      });
+
+      setTransactions(
+        txData.data.map((tx) => ({
+          digest: tx.digest,
+          type: "Transaction",
+          status: tx.effects?.status?.status || "Unknown",
+          gasUsed: tx.effects?.gasUsed,
+          timestamp: tx.timestampMs || undefined,
+        }))
+      );
+
+      // Check card existence
+      const { data } = await supabase
+        .from("virtual_cards")
+        .select("encrypted_card")
+        .eq("wallet_address", currentAccount.address)
+        .single();
+      setCardExists(!!data?.encrypted_card);
+    }
+  };
+
   // Fetch SUI price on component mount and every 30 seconds
   useEffect(() => {
     fetchSuiPrice();
@@ -374,14 +429,15 @@ const ProfileView = () => {
       setPinModalOpen(false);
       setPinInput("");
       setConfirmPinInput("");
-      setFeedback(
+
+      // Show success alert
+      setSuccessMessage(
         "✅ Virtual card created successfully! 0.1 SUI has been transferred."
       );
+      setShowSuccessAlert(true);
 
-      // Clear error after successful creation
-      setTimeout(() => {
-        setFeedback(null);
-      }, 5000);
+      // Refresh all data
+      await refreshAllData();
     } catch (err: any) {
       console.error("Error creating virtual card:", err);
       setPinError(`Failed to create card: ${err.message}`);
@@ -451,16 +507,8 @@ const ProfileView = () => {
     tx.setGasBudget(5_000_000); // ~= 0.005 SUI
     tx.setSender(currentAccount.address);
 
-    const result = await new Promise<any>((resolve, reject) => {
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-        },
-        {
-          onSuccess: resolve,
-          onError: reject,
-        }
-      );
+    const result = await signAndExecuteTransaction({
+      transaction: tx as any,
     });
 
     return result;
@@ -483,16 +531,8 @@ const ProfileView = () => {
     tx.setGasBudget(5_000_000); // ~= 0.005 SUI
     tx.setSender(currentAccount.address);
 
-    const result = await new Promise<any>((resolve, reject) => {
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-        },
-        {
-          onSuccess: resolve,
-          onError: reject,
-        }
-      );
+    const result = await signAndExecuteTransaction({
+      transaction: tx as any,
     });
 
     return result;
@@ -533,21 +573,14 @@ const ProfileView = () => {
         false
       );
 
-      setFeedback(
+      // Show success alert
+      setSuccessMessage(
         `✅ Transaction successful! Digest: ${result.digest} (no fee)`
       );
+      setShowSuccessAlert(true);
 
-      // Refetch coins after success
-      const coinData = await suiClient.getCoins({
-        owner: currentAccount.address,
-        coinType: "0x2::sui::SUI",
-      });
-      setCoins(
-        coinData.data.map((coin) => ({
-          coinObjectId: coin.coinObjectId,
-          balance: (Number(coin.balance) / 1_000_000_000).toFixed(3),
-        }))
-      );
+      // Refresh all data
+      await refreshAllData();
     } catch (err: any) {
       setTransferError(`Error: ${err.message}`);
     } finally {
@@ -581,21 +614,14 @@ const ProfileView = () => {
       // Use transfer without fee for "transfer all"
       const result = await transferAllBalance(recipient);
 
-      setFeedback(
+      // Show success alert
+      setSuccessMessage(
         `✅ Transfer All successful! Digest: ${result.digest} (no fee)`
       );
+      setShowSuccessAlert(true);
 
-      // Refetch coins after success
-      const coinData = await suiClient.getCoins({
-        owner: currentAccount.address,
-        coinType: "0x2::sui::SUI",
-      });
-      setCoins(
-        coinData.data.map((coin: any) => ({
-          coinObjectId: coin.coinObjectId,
-          balance: (Number(coin.balance) / 1_000_000_000).toFixed(3),
-        }))
-      );
+      // Refresh all data
+      await refreshAllData();
     } catch (err: any) {
       console.error("Transfer All failed:", err);
       setTransferError(`Error: ${err.message || String(err)}`);
@@ -1035,6 +1061,15 @@ const ProfileView = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Success Alert */}
+      {showSuccessAlert && (
+        <SuccessAlert
+          message={successMessage}
+          onClose={() => setShowSuccessAlert(false)}
+          duration={5000}
+        />
       )}
     </div>
   );

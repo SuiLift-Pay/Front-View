@@ -12,6 +12,7 @@ import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { supabase } from "../utils/supabaseClient";
 import CryptoJS from "crypto-js";
 import ATMCard from "./ATMCard";
+import SuccessAlert from "./SuccessAlert";
 
 const ENCRYPTION_SECRET = import.meta.env.VITE_ENCRYPTION_SECRET as string;
 const PACKAGE_ID = import.meta.env.VITE_PACKAGE_ID as string;
@@ -20,7 +21,8 @@ const CardDetails = () => {
   const name = "..";
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const { mutateAsync: signAndExecuteTransaction } =
+    useSignAndExecuteTransaction();
   const walletAddress = currentAccount?.address ?? "";
 
   const [decryptedCard, setDecryptedCard] = useState<any>(null);
@@ -38,6 +40,8 @@ const CardDetails = () => {
 
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Helper to shorten wallet address
   const shortenAddress = (address: string) => {
@@ -60,6 +64,13 @@ const CardDetails = () => {
     } catch (err: any) {
       console.error("Error fetching card wallet balance:", err);
       setCardWalletBalance(0);
+    }
+  };
+
+  // Function to refresh all card data
+  const refreshCardData = async () => {
+    if (decryptedCard?.address) {
+      await fetchCardWalletBalance(decryptedCard.address);
     }
   };
 
@@ -126,16 +137,8 @@ const CardDetails = () => {
     tx.setGasBudget(5_000_000); // ~= 0.005 SUI
     tx.setSender(currentAccount.address);
 
-    const result = await new Promise<any>((resolve, reject) => {
-      signAndExecuteTransaction(
-        {
-          transaction: tx as any,
-        },
-        {
-          onSuccess: resolve,
-          onError: reject,
-        }
-      );
+    const result = await signAndExecuteTransaction({
+      transaction: tx as any,
     });
 
     return result;
@@ -187,15 +190,17 @@ const CardDetails = () => {
         true
       );
 
-      setFeedback(
+      // Show success alert
+      setSuccessMessage(
         `✅ Successfully funded card with ${fundAmount} SUI (with fee)!`
       );
+      setShowSuccessAlert(true);
       setPinModalOpen(false);
       setPinInput("");
       setFundAmount("");
 
-      // Refresh card wallet balance
-      await fetchCardWalletBalance(decrypted.address);
+      // Refresh card data
+      await refreshCardData();
     } catch (err: any) {
       console.error("Error funding card:", err);
       setPinError(`Failed to fund card: ${err.message}`);
@@ -283,13 +288,17 @@ const CardDetails = () => {
         },
       });
 
-      setFeedback(`✅ Successfully withdrew ${withdrawAmount} SUI from card!`);
+      // Show success alert
+      setSuccessMessage(
+        `✅ Successfully withdrew ${withdrawAmount} SUI from card!`
+      );
+      setShowSuccessAlert(true);
       setPinModalOpen(false);
       setPinInput("");
       setWithdrawAmount("");
 
-      // Refresh card wallet balance
-      await fetchCardWalletBalance(decrypted.address);
+      // Refresh card data
+      await refreshCardData();
     } catch (err: any) {
       console.error("Error withdrawing from card:", err);
       setPinError(`Failed to withdraw: ${err.message}`);
@@ -603,6 +612,15 @@ const CardDetails = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Success Alert */}
+      {showSuccessAlert && (
+        <SuccessAlert
+          message={successMessage}
+          onClose={() => setShowSuccessAlert(false)}
+          duration={5000}
+        />
       )}
     </div>
   );
