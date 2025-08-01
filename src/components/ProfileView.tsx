@@ -998,11 +998,11 @@ const ProfileView = () => {
                   </div>
                   <div className="flex justify-between">
                     <span>Estimated gas:</span>
-                    <span>~0.05 SUI</span>
+                    <span>~0.002 SUI</span>
                   </div>
                   <div className="flex justify-between border-t border-gray-600 pt-1 font-medium">
                     <span>Total cost:</span>
-                    <span>~0.11 SUI</span>
+                    <span>~0.102 SUI</span>
                   </div>
                 </div>
               </div>
