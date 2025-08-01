@@ -81,7 +81,7 @@ const LandingPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <main className="w-full">
+    <main className="max-w-full">
       <section
         ref={refNavbar}
         className=""
