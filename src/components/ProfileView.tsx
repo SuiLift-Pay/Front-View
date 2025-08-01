@@ -264,7 +264,7 @@ const ProfileView = () => {
     const keypair = new Ed25519Keypair();
     return {
       address: keypair.getPublicKey().toSuiAddress(),
-      privateKey: "generated_private_key", // For demo purposes
+      privateKey: keypair.getSecretKey(),
     };
   };
 
