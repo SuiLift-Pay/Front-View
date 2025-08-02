@@ -99,12 +99,12 @@ const LandingPage = () => {
             isInViewNavbar ? { y: 0, opacity: 1 } : { y: -100, opacity: 0 }
           }
           transition={{ duration: 0.5 }}
-          className='flex justify-between items-center md:px-30 lg:px-50 py-6 px-4 relative'
+          className='flex justify-between items-center md:px-30 lg:px-10 lg:py-1 py-2 px-4 relative'
         >
           <img
             src='/images/logo.svg'
             alt='SuiLift Logo'
-            className='lg:w-50 lg:h-30 md:w-20 w-20'
+            className='lg:w-40 lg:h-40 md:w-20 w-20'
           />
           {/* Hamburger for mobile */}
           <button
@@ -133,7 +133,7 @@ const LandingPage = () => {
             initial={{ opacity: 0 }}
             animate={isInViewNavbar ? { opacity: 1 } : { opacity: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className='bg-blue-00 rounded-full p-3 items-center md:space-x-7 lg:space-x-16 md:text-xl lg:text-2xl hidden md:flex'
+            className='bg-blue-00 rounded-full p-3 items-center justify-between md:space-x-7 lg:space-x-16 md:text-xl lg:text-xl hidden md:flex'
           >
             <a
               href='#home'
@@ -169,9 +169,9 @@ const LandingPage = () => {
           <main className='items-center space-x-2 bg-no-repeat bg-right hidden md:flex'>
             <Link
               to='/signin'
-              className='border hover:bg-blue-700 px-6 py-2 rounded-full font-semibold'
+              className='border hover:bg-blue-700 lg:mx-5 px-6 py-2 rounded-full font-semibold'
             >
-              Launch Now
+              Launch App
             </Link>
           </main>
           {/* Mobile Menu Overlay */}
