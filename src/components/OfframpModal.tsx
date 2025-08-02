@@ -133,7 +133,7 @@ const OfframpModal: React.FC<OfframpModalProps> = ({ open, onClose }) => {
 
     const txb = new Transaction();
 
-    // For offramp transfers, split the exact amount and transfer it (no fee)
+    // For offramp transfers, split the exact amount and transfer it 
     const [splitCoin] = txb.splitCoins(
       txb.objectRef({
         objectId: bestCoin.coinObjectId,

@@ -560,7 +560,7 @@ const ProfileView = () => {
 
       // Show success alert
       setSuccessMessage(
-        `✅ Transaction successful! Digest: ${result.digest} (no fee)`
+        `✅ Transaction successful! Digest: ${result.digest}`
       );
       setShowSuccessAlert(true);
 
@@ -601,7 +601,7 @@ const ProfileView = () => {
 
       // Show success alert
       setSuccessMessage(
-        `✅ Transfer All successful! Digest: ${result.digest} (no fee)`
+        `✅ Transfer All successful! Digest: ${result.digest}`
       );
       setShowSuccessAlert(true);
 
@@ -885,7 +885,7 @@ const ProfileView = () => {
                 <div className='mb-4'>
                   <div className='w-full p-2 rounded bg-gray-700 text-white'>
                     <p className='text-sm text-gray-300'>
-                      Transfer All (No Fee)
+                      Transfer All 
                     </p>
                   </div>
                   <p className='text-xs text-gray-400 mt-1'>
