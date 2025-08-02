@@ -153,7 +153,7 @@ const ProfileView = () => {
 
       try {
         const { data } = await supabase
-          .from("virtual_cards")
+          .from("virtual_card")
           .select("encrypted_card")
           .eq("wallet_address", currentAccount.address)
           .single();
@@ -253,7 +253,7 @@ const ProfileView = () => {
 
       // Check card existence
       const { data } = await supabase
-        .from("virtual_cards")
+        .from("virtual_card")
         .select("encrypted_card")
         .eq("wallet_address", currentAccount.address)
         .single();
@@ -331,7 +331,7 @@ const ProfileView = () => {
 
     // Check if card already exists
     const { data: existingCard } = await supabase
-      .from("virtual_cards")
+      .from("virtual_card")
       .select("encrypted_card")
       .eq("wallet_address", currentAccount.address)
       .single();
@@ -415,7 +415,7 @@ const ProfileView = () => {
       const encryptedCard = encryptCardDetails(cardData);
 
       // Save to Supabase
-      const { error } = await supabase.from("virtual_cards").insert({
+      const { error } = await supabase.from("virtual_card").insert({
         wallet_address: currentAccount.address,
         encrypted_card: encryptedCard,
       });
