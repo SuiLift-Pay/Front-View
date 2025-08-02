@@ -19,9 +19,7 @@ const SuitoData: React.FC<SuitoDataModalProps> = ({ open, onClose }) => {
         >
           <FaTimes className='w-6 h-6 font-extrabold' />
         </button>
-        <h2 className='text-xl font-bold mb-4 text-center'>
-          Select NFT to Sell Instantly
-        </h2>
+
         <div className='text-5xl text-black'>COMING SOON</div>
       </div>
     </div>

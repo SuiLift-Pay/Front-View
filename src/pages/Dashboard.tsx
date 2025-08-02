@@ -1,12 +1,12 @@
 // Dashboard.js
 import React, { useState } from 'react';
-import Sidebar from '../components/Sidebar';
-import ProfileView from '../components/ProfileView';
-import CardDetails from '../components/CardDetails';
-import FundingOption from '../components/FundingOption';
 import Activity from '../components/Activity';
-import ProfilePage from '../components/Profile';
+import CardDetails from '../components/CardDetails';
 import Logout from '../components/Logout';
+import ProfilePage from '../components/Profile';
+import ProfileView from '../components/ProfileView';
+import Sidebar from '../components/Sidebar';
+import FundingOption from '../components/Transactions';
 
 const Dashboard: React.FC = () => {
   const [selectedSection, setSelectedSection] = useState<string>('profile');

@@ -153,9 +153,9 @@ const ProfileView = () => {
 
       try {
         const { data } = await supabase
-          .from("virtual_card")
-          .select("encrypted_card")
-          .eq("wallet_address", currentAccount.address)
+          .from('virtual_card')
+          .select('encrypted_card')
+          .eq('wallet_address', currentAccount.address)
           .single();
 
         setCardExists(!!data?.encrypted_card);
@@ -253,9 +253,9 @@ const ProfileView = () => {
 
       // Check card existence
       const { data } = await supabase
-        .from("virtual_card")
-        .select("encrypted_card")
-        .eq("wallet_address", currentAccount.address)
+        .from('virtual_card')
+        .select('encrypted_card')
+        .eq('wallet_address', currentAccount.address)
         .single();
       setCardExists(!!data?.encrypted_card);
     }
@@ -331,9 +331,9 @@ const ProfileView = () => {
 
     // Check if card already exists
     const { data: existingCard } = await supabase
-      .from("virtual_card")
-      .select("encrypted_card")
-      .eq("wallet_address", currentAccount.address)
+      .from('virtual_card')
+      .select('encrypted_card')
+      .eq('wallet_address', currentAccount.address)
       .single();
 
     if (existingCard?.encrypted_card) {
@@ -415,7 +415,7 @@ const ProfileView = () => {
       const encryptedCard = encryptCardDetails(cardData);
 
       // Save to Supabase
-      const { error } = await supabase.from("virtual_card").insert({
+      const { error } = await supabase.from('virtual_card').insert({
         wallet_address: currentAccount.address,
         encrypted_card: encryptedCard,
       });
@@ -559,9 +559,7 @@ const ProfileView = () => {
       );
 
       // Show success alert
-      setSuccessMessage(
-        `✅ Transaction successful! Digest: ${result.digest}`
-      );
+      setSuccessMessage(`✅ Transaction successful! Digest: ${result.digest}`);
       setShowSuccessAlert(true);
 
       // Refresh all data
@@ -600,9 +598,7 @@ const ProfileView = () => {
       const result = await transferAllBalance(recipient);
 
       // Show success alert
-      setSuccessMessage(
-        `✅ Transfer All successful! Digest: ${result.digest}`
-      );
+      setSuccessMessage(`✅ Transfer All successful! Digest: ${result.digest}`);
       setShowSuccessAlert(true);
 
       // Refresh all data
@@ -884,9 +880,7 @@ const ProfileView = () => {
               {transferType === 'all' && (
                 <div className='mb-4'>
                   <div className='w-full p-2 rounded bg-gray-700 text-white'>
-                    <p className='text-sm text-gray-300'>
-                      Transfer All 
-                    </p>
+                    <p className='text-sm text-gray-300'>Transfer All</p>
                   </div>
                   <p className='text-xs text-gray-400 mt-1'>
                     All SUI will be transferred without any fee

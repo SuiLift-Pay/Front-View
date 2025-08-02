@@ -1,11 +1,11 @@
+import { useState } from 'react';
 import {
   FaCreditCard,
-  FaWallet,
   FaHistory,
-  FaUserCircle,
   FaTachometerAlt,
+  FaUserCircle,
+  FaWallet,
 } from 'react-icons/fa';
-import { useState } from 'react';
 import Logout from './Logout';
 
 interface SidebarProps {
@@ -102,17 +102,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               </li>
               <li
                 className={`flex items-center p-2 rounded cursor-pointer ${
-                  selectedSection === 'funding'
-                    ? 'bg-white text-blue-700'
-                    : 'hover:bg-gray-500 hover:bg-opacity-30'
-                }`}
-                onClick={() => handleSectionClick('funding')}
-              >
-                <FaWallet className='mr-3' />
-                <span>Transaction</span>
-              </li>
-              <li
-                className={`flex items-center p-2 rounded cursor-pointer ${
                   selectedSection === 'profile-settings'
                     ? 'bg-white text-blue-700'
                     : 'hover:bg-gray-500 hover:bg-opacity-30'
@@ -121,6 +110,17 @@ const Sidebar: React.FC<SidebarProps> = ({
               >
                 <FaUserCircle className='mr-3' />
                 <span>Profile</span>
+              </li>
+              <li
+                className={`flex items-center p-2 rounded cursor-pointer ${
+                  selectedSection === 'funding'
+                    ? 'bg-white text-blue-700'
+                    : 'hover:bg-gray-500 hover:bg-opacity-30'
+                }`}
+                onClick={() => handleSectionClick('funding')}
+              >
+                <FaWallet className='mr-3' />
+                <span>Transaction</span>
               </li>
             </ul>
             {/* lower Items */}
