@@ -422,6 +422,7 @@ const CardDetails = () => {
                   }
                   walletAddress={decryptedCard.address}
                   balance={cardWalletBalance}
+                  address={currentAccount?.address}
                 />
               ) : (
                 <div className='text-gray-400'>
