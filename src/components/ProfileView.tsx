@@ -813,7 +813,7 @@ const ProfileView = () => {
               <div className='flex flex-col items-center gap-2 mb-2'>
                 <FaWifi className='text-cyan-400 text-xl' />
                 <p className='text-lg font-semibold'>Sui to Data</p>
-                <p className='text-sm text-gray-400'>Buy Data Now</p>
+                <p className='text-sm text-gray-400'>Buy Mobile Data Now</p>
               </div>
             </button>
 
