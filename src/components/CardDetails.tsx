@@ -164,7 +164,7 @@ const CardDetails = () => {
     try {
       // Fetch encrypted card from Supabase
       const { data, error } = await supabase
-        .from("virtual_cards")
+        .from("virtual_card")
         .select("encrypted_card")
         .eq("wallet_address", walletAddress)
         .single();
@@ -222,7 +222,7 @@ const CardDetails = () => {
     try {
       // Fetch encrypted card from Supabase
       const { data, error } = await supabase
-        .from("virtual_cards")
+        .from("virtual_card")
         .select("encrypted_card")
         .eq("wallet_address", walletAddress)
         .single();
@@ -326,7 +326,7 @@ const CardDetails = () => {
 
       try {
         const { data, error } = await supabase
-          .from("virtual_cards")
+          .from("virtual_card")
           .select("encrypted_card")
           .eq("wallet_address", walletAddress)
           .single();
