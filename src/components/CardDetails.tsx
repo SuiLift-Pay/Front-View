@@ -1,17 +1,17 @@
-import { useEffect, useState } from "react";
-import { FaBolt, FaGlobe, FaShieldAlt, FaCoins } from "react-icons/fa";
-import Card from "./Card";
-import Header from "./Header";
+import { useEffect, useState } from 'react';
+import { FaBolt, FaGlobe, FaShieldAlt, FaCoins } from 'react-icons/fa';
+import Card from './Card';
+import Header from './Header';
 import {
   useCurrentAccount,
   useSuiClient,
   useSignAndExecuteTransaction,
-} from "@mysten/dapp-kit";
-import { Transaction } from "@mysten/sui/transactions";
-import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { supabase } from "../utils/supabaseClient";
-import CryptoJS from "crypto-js";
-import SuccessAlert from "./SuccessAlert";
+} from '@mysten/dapp-kit';
+import { Transaction } from '@mysten/sui/transactions';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { supabase } from '../utils/supabaseClient';
+import CryptoJS from 'crypto-js';
+import SuccessAlert from './SuccessAlert';
 
 const ENCRYPTION_SECRET = import.meta.env.VITE_ENCRYPTION_SECRET as string;
 const PACKAGE_ID = import.meta.env.VITE_PACKAGE_ID as string;
@@ -34,33 +34,33 @@ interface CardData {
 }
 
 const CardDetails = () => {
-  const name = "..";
+  const name = '..';
   const currentAccount = useCurrentAccount();
   const suiClient = useSuiClient();
   const { mutateAsync: signAndExecuteTransaction } =
     useSignAndExecuteTransaction();
-  const walletAddress = currentAccount?.address ?? "";
+  const walletAddress = currentAccount?.address ?? '';
 
   const [decryptedCard, setDecryptedCard] = useState<CardData | null>(null);
   const [cardWalletBalance, setCardWalletBalance] = useState<number>(0);
 
   // Card management state variables
   const [pinModalOpen, setPinModalOpen] = useState(false);
-  const [pinInput, setPinInput] = useState("");
-  const [pinError, setPinError] = useState("");
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState('');
   const [pendingCardAction, setPendingCardAction] = useState<
-    "fund" | "withdraw"
-  >("fund");
-  const [fundAmount, setFundAmount] = useState("");
-  const [withdrawAmount, setWithdrawAmount] = useState("");
+    'fund' | 'withdraw'
+  >('fund');
+  const [fundAmount, setFundAmount] = useState('');
+  const [withdrawAmount, setWithdrawAmount] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Helper to shorten wallet address
   const shortenAddress = (address: string) => {
-    if (!address) return "";
+    if (!address) return '';
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
@@ -69,7 +69,7 @@ const CardDetails = () => {
     try {
       const coinData = await suiClient.getCoins({
         owner: cardWalletAddress,
-        coinType: "0x2::sui::SUI",
+        coinType: '0x2::sui::SUI',
       });
       const total = coinData.data.reduce(
         (sum, coin) => sum + Number(coin.balance),
@@ -77,7 +77,7 @@ const CardDetails = () => {
       );
       setCardWalletBalance(total / 1_000_000_000);
     } catch (err: unknown) {
-      console.error("Error fetching card wallet balance:", err);
+      console.error('Error fetching card wallet balance:', err);
       setCardWalletBalance(0);
     }
   };
@@ -96,10 +96,10 @@ const CardDetails = () => {
     useFee: boolean = false
   ) => {
     if (!currentAccount) {
-      throw new Error("Wallet not connected");
+      throw new Error('Wallet not connected');
     }
 
-    console.log("Transfer details:", {
+    console.log('Transfer details:', {
       amount,
       recipient,
       useFee,
@@ -107,7 +107,7 @@ const CardDetails = () => {
 
     const amountInMist = BigInt(Math.floor(amount * 1_000_000_000));
     if (amountInMist <= 0) {
-      throw new Error("Amount must be greater than 0.");
+      throw new Error('Amount must be greater than 0.');
     }
 
     const tx = new Transaction();
@@ -119,7 +119,7 @@ const CardDetails = () => {
       // Use the transfer_with_fee function on the split coin
       tx.moveCall({
         target: `${PACKAGE_ID}::transfer::transfer_with_fee`,
-        typeArguments: ["0x2::sui::SUI"],
+        typeArguments: ['0x2::sui::SUI'],
         arguments: [
           splitCoin,
           tx.pure.u64(amountInMist),
@@ -145,39 +145,39 @@ const CardDetails = () => {
 
   // Card management handler functions
   const handleFundCard = () => {
-    setPendingCardAction("fund");
+    setPendingCardAction('fund');
     setPinModalOpen(true);
   };
 
   const handleWithdrawFromCard = () => {
-    setPendingCardAction("withdraw");
+    setPendingCardAction('withdraw');
     setPinModalOpen(true);
   };
 
   const handleFundWithPin = async () => {
-    setPinError("");
+    setPinError('');
     if (!fundAmount || parseFloat(fundAmount) <= 0) {
-      setPinError("Please enter a valid amount");
+      setPinError('Please enter a valid amount');
       return;
     }
     setLoading(true);
     try {
       // Fetch encrypted card from Supabase
       const { data, error } = await supabase
-        .from("virtual_cards")
-        .select("encrypted_card")
-        .eq("wallet_address", walletAddress)
+        .from('virtual_cards')
+        .select('encrypted_card')
+        .eq('wallet_address', walletAddress)
         .single();
 
       if (error || !data?.encrypted_card) {
-        setPinError("Card not found");
+        setPinError('Card not found');
         setLoading(false);
         return;
       }
 
       const decrypted = decryptCardBlob(data.encrypted_card);
       if (decrypted.pin !== pinInput) {
-        setPinError("Incorrect PIN");
+        setPinError('Incorrect PIN');
         setLoading(false);
         return;
       }
@@ -195,16 +195,16 @@ const CardDetails = () => {
       );
       setShowSuccessAlert(true);
       setPinModalOpen(false);
-      setPinInput("");
-      setFundAmount("");
+      setPinInput('');
+      setFundAmount('');
 
       // Refresh card data
       await refreshCardData();
     } catch (err: unknown) {
-      console.error("Error funding card:", err);
+      console.error('Error funding card:', err);
       setPinError(
         `Failed to fund card: ${
-          err instanceof Error ? err.message : "Unknown error"
+          err instanceof Error ? err.message : 'Unknown error'
         }`
       );
     } finally {
@@ -213,36 +213,36 @@ const CardDetails = () => {
   };
 
   const handleWithdrawWithPin = async () => {
-    setPinError("");
+    setPinError('');
     if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
-      setPinError("Please enter a valid amount");
+      setPinError('Please enter a valid amount');
       return;
     }
     setLoading(true);
     try {
       // Fetch encrypted card from Supabase
       const { data, error } = await supabase
-        .from("virtual_cards")
-        .select("encrypted_card")
-        .eq("wallet_address", walletAddress)
+        .from('virtual_cards')
+        .select('encrypted_card')
+        .eq('wallet_address', walletAddress)
         .single();
 
       if (error || !data?.encrypted_card) {
-        setPinError("Card not found");
+        setPinError('Card not found');
         setLoading(false);
         return;
       }
 
       const decrypted = decryptCardBlob(data.encrypted_card);
       if (decrypted.pin !== pinInput) {
-        setPinError("Incorrect PIN");
+        setPinError('Incorrect PIN');
         setLoading(false);
         return;
       }
 
       // Check if card has sufficient balance
       if (cardWalletBalance < parseFloat(withdrawAmount)) {
-        setPinError("Insufficient card balance");
+        setPinError('Insufficient card balance');
         setLoading(false);
         return;
       }
@@ -258,17 +258,17 @@ const CardDetails = () => {
       const [splitCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(amountInMist)]);
       tx.transferObjects(
         [splitCoin],
-        tx.pure.address(currentAccount?.address || "")
+        tx.pure.address(currentAccount?.address || '')
       );
 
       // Set gas budget and sender
       tx.setGasBudget(5_000_000); // ~= 0.005 SUI
       tx.setSender(decrypted.address); // Use card wallet as sender
 
-      console.log("Withdraw transaction:", {
+      console.log('Withdraw transaction:', {
         amount: withdrawAmount,
         from: decrypted.address,
-        to: currentAccount?.address || "",
+        to: currentAccount?.address || '',
         amountInMist: amountInMist.toString(),
       });
 
@@ -297,16 +297,16 @@ const CardDetails = () => {
       );
       setShowSuccessAlert(true);
       setPinModalOpen(false);
-      setPinInput("");
-      setWithdrawAmount("");
+      setPinInput('');
+      setWithdrawAmount('');
 
       // Refresh card data
       await refreshCardData();
     } catch (err: unknown) {
-      console.error("Error withdrawing from card:", err);
+      console.error('Error withdrawing from card:', err);
       setPinError(
         `Failed to withdraw: ${
-          err instanceof Error ? err.message : "Unknown error"
+          err instanceof Error ? err.message : 'Unknown error'
         }`
       );
     } finally {
@@ -326,13 +326,13 @@ const CardDetails = () => {
 
       try {
         const { data, error } = await supabase
-          .from("virtual_cards")
-          .select("encrypted_card")
-          .eq("wallet_address", walletAddress)
+          .from('virtual_cards')
+          .select('encrypted_card')
+          .eq('wallet_address', walletAddress)
           .single();
 
-        if (error && error.code !== "PGRST116") {
-          console.error("Error fetching card:", error);
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching card:', error);
           setDecryptedCard(null);
           return;
         }
@@ -353,20 +353,20 @@ const CardDetails = () => {
             }
 
             // Log decrypted card details and shortened wallet address
-            console.log("Decrypted Card Details:", cardObj);
+            console.log('Decrypted Card Details:', cardObj);
             console.log(
-              "Wallet Address (short):",
+              'Wallet Address (short):',
               shortenAddress(walletAddress)
             );
           } catch (e) {
-            console.error("Error decrypting card:", e);
+            console.error('Error decrypting card:', e);
             setDecryptedCard(null);
           }
         } else {
           setDecryptedCard(null);
         }
       } catch (err) {
-        console.error("Unexpected error fetching card:", err);
+        console.error('Unexpected error fetching card:', err);
         setDecryptedCard(null);
       }
     };
@@ -374,57 +374,57 @@ const CardDetails = () => {
   }, [walletAddress, suiClient, fetchCardWalletBalance]);
 
   return (
-    <div className="p-6 md:px-6 lg:px-10 mt-10">
+    <div className='p-6 md:px-6 lg:px-10 mt-10'>
       {/* Header */}
       <Header name={name} walletAddress={walletAddress} />
       {/* Profile */}
-      <div className="bg-gray-900 rounded-xl p-6 mb-8 h-auto">
-        <div className="flex items-center gap-4 mb-6"></div>
+      <div className='bg-gray-900 rounded-xl p-6 mb-8 h-auto'>
+        <div className='flex items-center gap-4 mb-6'></div>
 
         {/* Card Header */}
-        <div className="">
-          <h3 className="text-lg font-semibold mb-2">Card</h3>
-          <p className="text-sm text-gray-400 mb-6">
+        <div className=''>
+          <h3 className='text-lg font-semibold mb-2'>Card</h3>
+          <p className='text-sm text-gray-400 mb-6'>
             Use your digital assets like cash. Instantly pay online or in-store
             with a secure virtual card accepted worldwide.
           </p>
 
           {/* Tab Buttons */}
-          <div className="flex gap-2 mb-6">
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-md font-semibold text-sm">
+          <div className='flex gap-2 mb-6'>
+            <button className='bg-blue-600 text-white px-4 py-2 rounded-md font-semibold text-sm'>
               Virtual Card Details
             </button>
-            <button className="bg-gray-800 text-white px-4 py-2 rounded-md font-semibold text-sm">
+            <button className='bg-gray-800 text-white px-4 py-2 rounded-md font-semibold text-sm'>
               Card Benefits
             </button>
           </div>
 
           {/* Card + Benefits */}
-          <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6 ">
+          <div className='grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6 '>
             {/* Virtual Card Preview with Custom Background */}
-            <div className="flex flex-col gap-5">
-              <p className="text-sm mb-2">Virtual Card</p>
+            <div className='flex flex-col gap-5'>
+              <p className='text-sm mb-2'>Virtual Card</p>
               {decryptedCard ? (
                 <Card
                   cardNumber={
                     decryptedCard.cardDetails?.cardNumber ||
                     decryptedCard.cardNumber ||
-                    "0000 0000 0000 0000"
+                    '0000 0000 0000 0000'
                   }
                   cardHolder={walletAddress}
                   expiry={
                     decryptedCard.cardDetails?.expiry ||
                     decryptedCard.expiry ||
-                    "MM/YY"
+                    'MM/YY'
                   }
                   cvv={
-                    decryptedCard.cardDetails?.cvv || decryptedCard.cvv || "123"
+                    decryptedCard.cardDetails?.cvv || decryptedCard.cvv || '123'
                   }
                   walletAddress={decryptedCard.address}
                   balance={cardWalletBalance}
                 />
               ) : (
-                <div className="text-gray-400">
+                <div className='text-gray-400'>
                   No card found for this wallet.
                 </div>
               )}
@@ -432,41 +432,41 @@ const CardDetails = () => {
 
             {/* Card Management Section */}
             {decryptedCard && (
-              <div className="space-y-4">
-                <div className="bg-gray-800 rounded-lg p-4">
-                  <h4 className="text-lg font-semibold mb-3">
+              <div className='space-y-4'>
+                <div className='bg-gray-800 rounded-lg p-4'>
+                  <h4 className='text-lg font-semibold mb-3'>
                     Card Information
                   </h4>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Card Balance:</span>
-                      <span className="text-xl font-bold text-green-400">
+                  <div className='space-y-3'>
+                    <div className='flex justify-between items-center'>
+                      <span className='text-gray-400'>Card Balance:</span>
+                      <span className='text-xl font-bold text-green-400'>
                         {cardWalletBalance.toFixed(4)} SUI
                       </span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Card Wallet:</span>
-                      <span className="text-sm font-mono">
+                    <div className='flex justify-between items-center'>
+                      <span className='text-gray-400'>Card Wallet:</span>
+                      <span className='text-sm font-mono'>
                         {decryptedCard?.address
                           ? `${decryptedCard.address.slice(
                               0,
                               6
                             )}...${decryptedCard.address.slice(-4)}`
-                          : "Not available"}
+                          : 'Not available'}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className='flex flex-wrap gap-2'>
                   <button
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm"
+                    className='bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm'
                     onClick={handleFundCard}
                   >
                     Fund Card
                   </button>
                   <button
-                    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded text-sm"
+                    className='bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded text-sm'
                     onClick={handleWithdrawFromCard}
                   >
                     Withdraw
@@ -476,47 +476,47 @@ const CardDetails = () => {
             )}
 
             {/* Benefits List */}
-            <div className="space-y-6">
-              <div className="flex items-start gap-4">
-                <FaBolt className="text-yellow-400 text-2xl mt-1" />
+            <div className='space-y-6'>
+              <div className='flex items-start gap-4'>
+                <FaBolt className='text-yellow-400 text-2xl mt-1' />
                 <div>
-                  <h4 className="text-lg font-semibold">Instant Assess</h4>
-                  <p className="text-sm text-gray-400">
+                  <h4 className='text-lg font-semibold'>Instant Assess</h4>
+                  <p className='text-sm text-gray-400'>
                     Get immediate spending power—no waiting, no pre-conversion.
                     Your SUI is ready when you are.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <FaGlobe className="text-blue-400 text-2xl mt-1" />
+              <div className='flex items-start gap-4'>
+                <FaGlobe className='text-blue-400 text-2xl mt-1' />
                 <div>
-                  <h4 className="text-lg font-semibold">Global Acceptance</h4>
-                  <p className="text-sm text-gray-400">
+                  <h4 className='text-lg font-semibold'>Global Acceptance</h4>
+                  <p className='text-sm text-gray-400'>
                     Spend your SUI anywhere Visa or Mastercard is accepted—
                     online, in-store, or for subscriptions.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <FaShieldAlt className="text-green-400 text-2xl mt-1" />
+              <div className='flex items-start gap-4'>
+                <FaShieldAlt className='text-green-400 text-2xl mt-1' />
                 <div>
-                  <h4 className="text-lg font-semibold">On-Chain Security</h4>
-                  <p className="text-sm text-gray-400">
+                  <h4 className='text-lg font-semibold'>On-Chain Security</h4>
+                  <p className='text-sm text-gray-400'>
                     Keep your assets safe with a non-custodial wallet—your funds
                     stay on-chain until the moment you spend.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <FaCoins className="text-purple-400 text-2xl mt-1" />
+              <div className='flex items-start gap-4'>
+                <FaCoins className='text-purple-400 text-2xl mt-1' />
                 <div>
-                  <h4 className="text-lg font-semibold">
+                  <h4 className='text-lg font-semibold'>
                     Spend and Safe Tokens
                   </h4>
-                  <p className="text-sm text-gray-400">
+                  <p className='text-sm text-gray-400'>
                     Use card spend and safe tokens e.g. SUI, Walrus, Blue,
                     Memefi, Dee.
                   </p>
@@ -531,9 +531,9 @@ const CardDetails = () => {
       {successMessage && (
         <div
           className={`fixed top-6 right-6 z-50 px-4 py-2 rounded ${
-            successMessage.startsWith("✅")
-              ? "bg-green-800 text-green-200"
-              : "bg-red-800 text-red-200"
+            successMessage.startsWith('✅')
+              ? 'bg-green-800 text-green-200'
+              : 'bg-red-800 text-red-200'
           }`}
         >
           {successMessage}
@@ -542,75 +542,75 @@ const CardDetails = () => {
 
       {/* PIN Modal */}
       {pinModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-xs">
-            <h2 className="text-lg font-semibold mb-4">
-              {pendingCardAction === "fund"
-                ? "Enter PIN to fund your card (with fee)"
-                : pendingCardAction === "withdraw"
-                ? "Enter PIN to withdraw from card"
-                : "Enter your 6-digit PIN"}
+        <div className='fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50'>
+          <div className='bg-gray-800 rounded-xl p-6 w-full max-w-xs'>
+            <h2 className='text-lg font-semibold mb-4'>
+              {pendingCardAction === 'fund'
+                ? 'Enter PIN to fund your card (with fee)'
+                : pendingCardAction === 'withdraw'
+                  ? 'Enter PIN to withdraw from card'
+                  : 'Enter your 6-digit PIN'}
             </h2>
 
             {/* Amount input for fund/withdraw */}
-            {(pendingCardAction === "fund" ||
-              pendingCardAction === "withdraw") && (
-              <div className="mb-4">
-                <label className="block text-sm mb-1">Amount (SUI)</label>
+            {(pendingCardAction === 'fund' ||
+              pendingCardAction === 'withdraw') && (
+              <div className='mb-4'>
+                <label className='block text-sm mb-1'>Amount (SUI)</label>
                 <input
-                  type="number"
+                  type='number'
                   value={
-                    pendingCardAction === "fund" ? fundAmount : withdrawAmount
+                    pendingCardAction === 'fund' ? fundAmount : withdrawAmount
                   }
-                  onChange={(e) =>
-                    pendingCardAction === "fund"
+                  onChange={e =>
+                    pendingCardAction === 'fund'
                       ? setFundAmount(e.target.value)
                       : setWithdrawAmount(e.target.value)
                   }
-                  placeholder="Enter amount"
-                  step="0.001"
-                  className="w-full p-2 rounded bg-gray-700 text-white"
+                  placeholder='Enter amount'
+                  step='0.001'
+                  className='w-full p-2 rounded bg-gray-700 text-white'
                   required
                 />
-                {pendingCardAction === "fund" && (
-                  <p className="text-xs text-gray-400 mt-1">
+                {pendingCardAction === 'fund' && (
+                  <p className='text-xs text-gray-400 mt-1'>
                     A small fee will be charged for this transaction
                   </p>
                 )}
               </div>
             )}
             <input
-              type="password"
+              type='password'
               value={pinInput}
-              onChange={(e) => setPinInput(e.target.value)}
+              onChange={e => setPinInput(e.target.value)}
               maxLength={6}
-              className="w-full p-2 rounded bg-gray-700 text-white text-center text-2xl tracking-widest mb-3"
-              placeholder="------"
+              className='w-full p-2 rounded bg-gray-700 text-white text-center text-2xl tracking-widest mb-3'
+              placeholder='------'
               autoFocus
             />
             {pinError && (
-              <p className="text-red-400 text-sm mb-2">{pinError}</p>
+              <p className='text-red-400 text-sm mb-2'>{pinError}</p>
             )}
-            <div className="flex gap-2 justify-end">
+            <div className='flex gap-2 justify-end'>
               <button
-                className="px-4 py-2 bg-gray-600 rounded"
+                className='px-4 py-2 bg-gray-600 rounded'
                 onClick={() => {
                   setPinModalOpen(false);
-                  setPinInput("");
+                  setPinInput('');
                 }}
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 bg-blue-600 rounded"
+                className='px-4 py-2 bg-blue-600 rounded'
                 onClick={
-                  pendingCardAction === "fund"
+                  pendingCardAction === 'fund'
                     ? handleFundWithPin
                     : handleWithdrawWithPin
                 }
                 disabled={loading}
               >
-                {loading ? "Processing..." : "Confirm"}
+                {loading ? 'Processing...' : 'Confirm'}
               </button>
             </div>
           </div>

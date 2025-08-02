@@ -1,10 +1,9 @@
-import "./App.css";
-import Myroute from "./Myroute";
+import './App.css';
+import Myroute from './Myroute';
 import {
   createNetworkConfig,
   SuiClientProvider,
   WalletProvider,
-  
 } from '@mysten/dapp-kit';
 import { getFullnodeUrl } from '@mysten/sui/client';
 import RegisterEnokiWallets from './components/RegisterEnokiWallets';
@@ -19,16 +18,14 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <>
-    <QueryClientProvider client={queryClient}>
-      <SuiClientProvider networks={networkConfig} defaultNetwork="testnet">
-        <RegisterEnokiWallets />
-        <WalletProvider
-        autoConnect
-        >
-      <Myroute />
-      </WalletProvider>
-      </SuiClientProvider>
-    </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <SuiClientProvider networks={networkConfig} defaultNetwork='testnet'>
+          <RegisterEnokiWallets />
+          <WalletProvider autoConnect>
+            <Myroute />
+          </WalletProvider>
+        </SuiClientProvider>
+      </QueryClientProvider>
     </>
   );
 }
