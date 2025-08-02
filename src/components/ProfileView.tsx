@@ -1,26 +1,30 @@
 // src/components/ProfileView.tsx
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   FaCheckCircle,
   FaCreditCard,
-  FaImage,
   FaExchangeAlt,
+  FaImage,
+  FaMobileAlt,
+  FaWifi,
 } from 'react-icons/fa';
 
 import {
   useCurrentAccount,
-  useSuiClient,
   useSignAndExecuteTransaction,
+  useSuiClient,
 } from '@mysten/dapp-kit';
-import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import { supabase } from '../utils/supabaseClient';
+import { Transaction } from '@mysten/sui/transactions';
 import CryptoJS from 'crypto-js';
+import { supabase } from '../utils/supabaseClient';
 
 import Header from './Header';
-import OfframpModal from './OfframpModal';
 import InstantNftSaleModal from './InstantNftSaleModal';
+import OfframpModal from './OfframpModal';
 import SuccessAlert from './SuccessAlert';
+import SuitoAirtime from './SuitoAirtime';
+import SuitoData from './SuitoData';
 
 const PACKAGE_ID = import.meta.env.VITE_PACKAGE_ID as string;
 const ENCRYPTION_SECRET = import.meta.env.VITE_ENCRYPTION_SECRET as string;
@@ -54,6 +58,8 @@ const ProfileView = () => {
   const [estimatedGas] = useState<number>(0.005);
   const [isOfframpOpen, setIsOfframpOpen] = useState(false);
   const [isInstantNftSaleOpen, setIsInstantNftSaleOpen] = useState(false);
+  const [isAirtimeSaleOpen, setIsAirtimeSaleOpen] = useState(false);
+  const [isDataSaleOpen, setIsDataSaleOpen] = useState(false);
   const [transactions, setTransactions] = useState<any[]>([]);
 
   // Card-related state variables
@@ -746,14 +752,14 @@ const ProfileView = () => {
         {/* Quick Action */}
         <div>
           <h3 className='text-md font-medium mb-3'>Quick Action</h3>
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-900 rounded-xl p-6 mb-8'>
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-900 rounded-xl p-6 mb-8'>
             {/* Transfer SUI */}
             <button
               className='bg-gray-800 rounded-xl p-4 text-left hover:bg-gray-700'
               onClick={() => setIsModalOpen(true)}
             >
               <div className='flex flex-col items-center gap-2 mb-2'>
-                <FaCreditCard className='text-green-600 text-xl' />
+                <FaExchangeAlt className='text-orange-600 text-xl' />
                 <p className='text-lg font-semibold'>Transfer SUI</p>
                 <p className='text-sm text-gray-400'>
                   Send SUI with or without fee
@@ -787,6 +793,30 @@ const ProfileView = () => {
               </div>
             </button>
 
+            {/* SUI TO AIRTIME */}
+            <button
+              className='bg-gray-800 rounded-xl p-4 text-left hover:bg-gray-700'
+              onClick={() => setIsAirtimeSaleOpen(true)}
+            >
+              <div className='flex flex-col items-center gap-2 mb-2'>
+                <FaMobileAlt className='text-yellow-400 text-xl' />
+                <p className='text-lg font-semibold'>Sui to Airtime</p>
+                <p className='text-sm text-gray-400'>Buy Airtime Now</p>
+              </div>
+            </button>
+
+            {/* SUI TO DATA */}
+            <button
+              className='bg-gray-800 rounded-xl p-4 text-left hover:bg-gray-700'
+              onClick={() => setIsDataSaleOpen(true)}
+            >
+              <div className='flex flex-col items-center gap-2 mb-2'>
+                <FaWifi className='text-cyan-400 text-xl' />
+                <p className='text-lg font-semibold'>Sui to Data</p>
+                <p className='text-sm text-gray-400'>Buy Data Now</p>
+              </div>
+            </button>
+
             {/* Get Virtual Card */}
             {!cardExists && (
               <button
@@ -814,6 +844,14 @@ const ProfileView = () => {
             <InstantNftSaleModal
               open={isInstantNftSaleOpen}
               onClose={() => setIsInstantNftSaleOpen(false)}
+            />
+            <SuitoAirtime
+              open={isAirtimeSaleOpen}
+              onClose={() => setIsAirtimeSaleOpen(false)}
+            />
+            <SuitoData
+              open={isDataSaleOpen}
+              onClose={() => setIsDataSaleOpen(false)}
             />
           </div>
         </div>
