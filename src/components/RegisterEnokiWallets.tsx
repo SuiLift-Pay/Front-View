@@ -1,6 +1,6 @@
-import { useEffect } from "react";
-import { useSuiClientContext } from "@mysten/dapp-kit";
-import { isEnokiNetwork, registerEnokiWallets } from "@mysten/enoki";
+import { useEffect } from 'react';
+import { useSuiClientContext } from '@mysten/dapp-kit';
+import { isEnokiNetwork, registerEnokiWallets } from '@mysten/enoki';
 
 export default function RegisterEnokiWallets() {
   const { client, network } = useSuiClientContext();
@@ -11,7 +11,7 @@ export default function RegisterEnokiWallets() {
       apiKey: import.meta.env.VITE_ENOKI_API_KEY,
       providers: {
         google: { clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID },
-        facebook: { clientId: "YOUR_FACEBOOK_CLIENT_ID" },
+        facebook: { clientId: 'YOUR_FACEBOOK_CLIENT_ID' },
       },
       client: client as any,
       network,

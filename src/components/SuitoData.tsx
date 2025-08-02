@@ -1,15 +1,12 @@
 import React from 'react';
 import { FaTimes } from 'react-icons/fa';
 
-interface InstantNftSaleModalProps {
+interface SuitoDataModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-const InstantNftSaleModal: React.FC<InstantNftSaleModalProps> = ({
-  open,
-  onClose,
-}) => {
+const SuitoData: React.FC<SuitoDataModalProps> = ({ open, onClose }) => {
   if (!open) return null;
 
   return (
@@ -30,4 +27,4 @@ const InstantNftSaleModal: React.FC<InstantNftSaleModalProps> = ({
     </div>
   );
 };
-export default InstantNftSaleModal;
+export default SuitoData;
